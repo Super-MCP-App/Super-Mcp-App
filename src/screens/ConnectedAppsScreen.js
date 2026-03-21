@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Text, IconButton, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { colors } from '../theme/colors';
 import { integrationsApi } from '../services/api';
 
@@ -36,11 +37,13 @@ export default function ConnectedAppsScreen({ navigation }) {
 
   const handleConnect = async (provider) => {
     try {
+      const redirectUrl = Linking.createURL('mcp-auth');
+      
       let data;
       if (provider === 'figma') {
-        data = await integrationsApi.figmaAuth();
+        data = await integrationsApi.figmaAuth(redirectUrl);
       } else if (provider === 'canva') {
-        data = await integrationsApi.canvaAuth();
+        data = await integrationsApi.canvaAuth(redirectUrl);
       } else {
         Alert.alert('Coming Soon', `${provider} integration is coming soon!`);
         return;
@@ -48,7 +51,6 @@ export default function ConnectedAppsScreen({ navigation }) {
       
       if (data?.authUrl) {
         // Use the custom scheme matching app.json
-        const redirectUrl = Linking.createURL('mcp-auth');
         const result = await WebBrowser.openAuthSessionAsync(data.authUrl, redirectUrl);
         
         if (result.type === 'success' || result.type === 'dismiss') {

@@ -1,25 +1,43 @@
 import { getAuthenticatedClient, errorResponse, successResponse } from '@/lib/api-helpers';
 
+const AVAILABLE_PROVIDERS = [
+  { provider: 'figma', provider_display_name: 'Figma', description: 'Access and export your Figma designs natively via AI.', scopes: 'files:read', status: 'available' },
+  { provider: 'canva', provider_display_name: 'Canva', description: 'Export designs from your Canva account.', scopes: 'design:read', status: 'available' },
+  { provider: 'google_drive', provider_display_name: 'Google Drive', description: 'Search and read documents from your Google Drive.', scopes: 'drive.readonly', status: 'coming_soon' },
+  { provider: 'notion', provider_display_name: 'Notion', description: 'Query your Notion workspace directly.', scopes: 'read_content', status: 'coming_soon' },
+];
+
 // GET /api/integrations — list all connected apps for user
 export async function GET(request) {
   const auth = await getAuthenticatedClient(request);
   if (auth.error) return auth.error;
 
   try {
-    const { data, error } = await auth.supabase
+    const { data } = await auth.supabase
       .from('connected_apps')
       .select('*')
       .eq('user_id', auth.user.id);
 
-    if (error) {
-      // If table has column issues, return what we can
-      console.log('Integrations error:', error.message);
-      return successResponse([]);
-    }
-    return successResponse(data || []);
+    const connectedMap = (data || []).reduce((acc, app) => {
+      acc[app.provider] = app;
+      return acc;
+    }, {});
+
+    const result = AVAILABLE_PROVIDERS.map(provider => {
+      if (connectedMap[provider.provider] && connectedMap[provider.provider].status === 'connected') {
+        return {
+          ...provider,
+          ...connectedMap[provider.provider],
+          status: 'connected'
+        };
+      }
+      return provider;
+    });
+
+    return successResponse(result);
   } catch (e) {
     console.log('Integrations catch:', e.message);
-    return successResponse([]);
+    return successResponse(AVAILABLE_PROVIDERS);
   }
 }
 
