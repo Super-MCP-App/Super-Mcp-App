@@ -1,0 +1,4 @@
+{
+  "framework": "nextjs",
+  "installCommand": "npm install --no-workspaces --no-fund"
+}
