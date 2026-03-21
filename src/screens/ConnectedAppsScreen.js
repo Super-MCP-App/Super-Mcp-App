@@ -9,6 +9,18 @@ import { integrationsApi } from '../services/api';
 
 WebBrowser.maybeCompleteAuthSession();
 
+const FALLBACK_PROVIDERS = [
+  { provider: 'figma', provider_display_name: 'Figma', description: 'Access and export your Figma designs natively via AI.', scopes: 'files:read', status: 'available' },
+  { provider: 'canva', provider_display_name: 'Canva', description: 'Export designs from your Canva account.', scopes: 'design:read', status: 'available' },
+  { provider: 'github', provider_display_name: 'GitHub', description: 'Manage repositories, issues, and pull requests.', scopes: 'repo, user', status: 'coming_soon' },
+  { provider: 'slack', provider_display_name: 'Slack', description: 'Interact with your Slack channels and messages.', scopes: 'chat:write, channels:read', status: 'coming_soon' },
+  { provider: 'discord', provider_display_name: 'Discord', description: 'Moderate and engage directly from your AI.', scopes: 'bot', status: 'coming_soon' },
+  { provider: 'google_drive', provider_display_name: 'Google Drive', description: 'Search and read documents from your Google Drive.', scopes: 'drive.readonly', status: 'coming_soon' },
+  { provider: 'notion', provider_display_name: 'Notion', description: 'Query your Notion workspace directly.', scopes: 'read_content', status: 'coming_soon' },
+  { provider: 'kite', provider_display_name: 'Kite', description: 'Connect your financial data insights securely.', scopes: 'portfolio:read', status: 'coming_soon' },
+  { provider: 'custom', provider_display_name: 'Custom Server', description: 'Connect any manual MCP standard server.', scopes: 'all', status: 'coming_soon' },
+];
+
 const providerIcons = {
   figma: { icon: 'palette-swatch', color: '#1e1e1e', bg: '#f0f0f0' },
   canva: { icon: 'brush', color: '#fff', bg: '#7d2ae8' },
@@ -29,9 +41,15 @@ export default function ConnectedAppsScreen({ navigation }) {
   const fetchApps = useCallback(async () => {
     try {
       const data = await integrationsApi.list();
-      setApps(data || []);
+      // Merge backend data with fallback to ensure all providers show
+      const merged = FALLBACK_PROVIDERS.map(fp => {
+        const remote = (data || []).find(rd => rd.provider === fp.provider);
+        return remote ? { ...fp, ...remote } : fp;
+      });
+      setApps(merged);
     } catch (e) {
       console.log('Fetch apps error:', e.message);
+      setApps(FALLBACK_PROVIDERS);
     } finally {
       setLoading(false);
       setRefreshing(false);
