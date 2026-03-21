@@ -92,8 +92,10 @@ export default function ConnectedAppsScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <IconButton icon="arrow-left" iconColor={colors.primary} size={24} onPress={() => navigation.goBack()} />
-          <Text style={styles.headerTitle}>Connected Apps</Text>
+          <Text style={styles.headerTitle}>MCP Apps</Text>
+          <TouchableOpacity onPress={() => { setRefreshing(true); fetchApps(); }} style={styles.refreshBtn}>
+            <MaterialCommunityIcons name="refresh" size={20} color={colors.primary} />
+          </TouchableOpacity>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mcpStrip}>
           {apps.map(app => {
@@ -195,9 +197,10 @@ function GridCard({ app, onPress, buttonLabel, status }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { paddingTop: 50, borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '15' },
-  headerTop: { flexDirection: 'row', alignItems: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.onSurface },
+  header: { paddingTop: 60, borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '15', backgroundColor: colors.background },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 16 },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: colors.onSurface, letterSpacing: -0.5 },
+  refreshBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primaryContainer + '30', justifyContent: 'center', alignItems: 'center' },
   mcpStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 12 },
   mcpChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.surfaceContainerLow, borderRadius: 20, borderWidth: 1, borderColor: colors.outlineVariant + '10' },
   mcpDot: { width: 6, height: 6, borderRadius: 3 },
