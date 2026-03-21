@@ -1,13 +1,13 @@
 <div align="center">
-  <h1>✨ Super Mcp ✨</h1>
+  <h1>✨ Super-MCP-App ✨</h1>
   <p><b>Your Intelligent, Native Mobile AI Assistant</b></p>
   
   <p>
-    <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
-    <img src="https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
-    <img src="https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
-    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-    <img src="https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="NVIDIA NIM" />
+    <a href="https://github.com/Super-MCP-App/Super-MCP-App/graphs/contributors"><img src="https://img.shields.io/github/contributors/Super-MCP-App/Super-MCP-App?style=for-the-badge&color=61DAFB" alt="Contributors" /></a>
+    <a href="https://github.com/Super-MCP-App/Super-MCP-App/network/members"><img src="https://img.shields.io/github/forks/Super-MCP-App/Super-MCP-App?style=for-the-badge&color=1B1F23" alt="Forks" /></a>
+    <a href="https://github.com/Super-MCP-App/Super-MCP-App/stargazers"><img src="https://img.shields.io/github/stars/Super-MCP-App/Super-MCP-App?style=for-the-badge&color=000000" alt="Stars" /></a>
+    <a href="https://github.com/Super-MCP-App/Super-MCP-App/issues"><img src="https://img.shields.io/github/issues/Super-MCP-App/Super-MCP-App?style=for-the-badge&color=3ECF8E" alt="Issues" /></a>
+    <a href="https://github.com/Super-MCP-App/Super-MCP-App/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-76B900?style=for-the-badge" alt="License" /></a>
   </p>
 
   <p>A fast, sleek, and highly capable mobile AI chat application built with React Native (Expo) and Next.js, powered by <b>Meta LLaMA 3.1</b> and <b>Supabase</b>.</p>
@@ -20,7 +20,7 @@
 - **💬 Real-Time Conversational AI** – Speak with an intelligent agent powered by the LLaMA 3.1 8B model via NVIDIA NIM.
 - **📱 Native Mobile Experience** – Built on React Native & Expo for smooth, native-like iOS and Android performance.
 - **🎨 Modern Material 3 Design** – Beautifully constructed interfaces with `@react-native-paper` utilizing customized color tokens.
-- **📝 Markdown Support** – Full rich-text rendering of AI responses, including syntax-highlighted code blocks for easy reading (`react-native-markdown-display`).
+- **📝 Markdown Support** – Full rich-text rendering of AI responses, including syntax-highlighted code blocks (`react-native-markdown-display`).
 - **🔄 Swipe-to-Delete** – Fluid, gesture-based conversation management right from your chat list (Powered by `react-native-gesture-handler`).
 - **🔐 Secure & Serverless Backend** – Next.js acts as an API gateway safely routing AI requests, backed by Supabase for authentication and persistent chat storage.
 
@@ -101,7 +101,7 @@ From the Expo terminal, press `i` to open the iOS Simulator or scan the QR code 
 ## 📦 Project Structure
 
 ```text
-mcp-app/
+Super-MCP-App/
 ├── src/                # Front-end React Native App
 │   ├── navigation/     # Tab and Stack Navigators
 │   ├── screens/        # React Native Screens (Home, Chat, Profile, etc.)
@@ -117,18 +117,16 @@ mcp-app/
 
 ## 🤝 Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+We welcome contributions from the community! Whether it's adding new features, fixing bugs, or improving documentation, your help makes Super-MCP-App better for everyone.
 
-1. **Fork the Project**
-2. **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
-3. **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
-4. **Push to the Branch** (`git push origin feature/AmazingFeature`)
-5. **Open a Pull Request**
+Please read our [Contributing Guidelines](/.github/CONTRIBUTING.md) to get started with setting up your development environment and submitting Pull Requests.
 
-### Contribution Guidelines
-- Please make sure to update tests as appropriate.
-- Ensure your code adheres to standard React Native and Next.js linting rules.
-- If modifying the backend API, update `.env.example` if new environment variables are needed.
+---
+
+## 🐛 Issues and Bug Reports
+
+Found a bug or have a great idea for a new feature? We'd love to hear about it!
+Please use our [Issue Tracker](https://github.com/Super-MCP-App/Super-MCP-App/issues) to report bugs or request features. We have templates prepared to help you provide all the necessary information.
 
 ---
 
@@ -136,5 +134,5 @@ Contributions are what make the open source community such an amazing place to l
   <i>Designed for fluidity, powered by modern AI.</i>
   <br>
   <br>
-  Made with ❤️ by the Super Mcp Team.
+  Made with ❤️ by the Super-MCP-App Open Source Organization.
 </div>
