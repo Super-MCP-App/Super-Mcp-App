@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Super Mcp - Prototype</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6750a5",
+                        "primary-dim": "#5b4497",
+                        "on-primary": "#fdf7ff",
+                        "primary-container": "#bba2fd",
+                        "on-primary-container": "#381e72",
+                        "secondary": "#635c72",
+                        "secondary-container": "#e8def9",
+                        "on-secondary-container": "#554e64",
+                        "tertiary": "#7b5270",
+                        "tertiary-container": "#f4bfe3",
+                        "on-tertiary-container": "#5f3956",
+                        "surface": "#fdf7fe",
+                        "on-surface": "#34313a",
+                        "surface-variant": "#e7e0ec",
+                        "on-surface-variant": "#615d68",
+                        "background": "#fdf7fe",
+                        "on-background": "#34313a",
+                        "outline": "#7d7983",
+                        "outline-variant": "#b5b0bb",
+                        "error": "#a8364b",
+                        "error-container": "#f97386",
+                        "on-error": "#fff7f7",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f8f1fa",
+                        "surface-container": "#f2ecf5",
+                        "surface-container-high": "#ece6f0",
+                        "surface-container-highest": "#e7e0ec",
+                        "primary-fixed-dim": "#ad95ef",
+                        "inverse-surface": "#0f0d12",
+                        "inverse-primary": "#bba2fd",
+                        "on-primary-fixed-variant": "#41297c"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .filled-icon { font-variation-settings: 'FILL' 1; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .editorial-gradient { background: linear-gradient(135deg, #6750a5 0%, #5b4497 100%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface">
+    <div id="root"></div>
+
+    <!-- React/Router Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const BottomNavBar = () => {
+            const navigate = useNavigate();
+            const location = useLocation();
+            const tabs = [
+                { path: '/home', icon: 'home', label: 'Home' },
+                { path: '/conversations', icon: 'chat_bubble', label: 'Chat' },
+                { path: '/usage', icon: 'apps', label: 'Apps' },
+                { path: '/tasks', icon: 'assignment_turned_in', label: 'Tasks' },
+                { path: '/profile', icon: 'person', label: 'Profile' }
+            ];
+
+            return (
+                <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-[90%] mb-4 h-[80px] rounded-full z-50 bg-white/70 dark:bg-gray-950/70 backdrop-blur-xl shadow-[0_32px_48px_-12px_rgba(103,80,164,0.06)] flex justify-around items-center px-6 pb-safe">
+                    {tabs.map(tab => {
+                        const isActive = location.pathname.startsWith(tab.path);
+                        return (
+                            <button 
+                                key={tab.path}
+                                onClick={() => navigate(tab.path)}
+                                className={`flex flex-col items-center justify-center px-5 py-1 transition-all active:scale-90 duration-200 rounded-full ${isActive ? 'bg-[#e8def9] text-[#1d192b]' : 'text-[#49454f]'}`}
+                            >
+                                <span className={`material-symbols-outlined ${isActive ? 'filled-icon' : ''}`}>{tab.icon}</span>
+                                <span className="font-inter text-[11px] font-medium tracking-wide uppercase mt-1">{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </nav>
+            );
+        };
+
+        const TopAppBar = ({ title, showBack = true, actions = true }) => {
+            const navigate = useNavigate();
+            return (
+                <header className="fixed top-0 w-full h-[100px] pt-[44px] z-50 bg-background flex items-center justify-between px-4">
+                    <div className="flex items-center gap-4">
+                        {showBack && (
+                            <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-black/5 text-primary active:scale-95 transition-all">
+                                <span className="material-symbols-outlined">arrow_back</span>
+                            </button>
+                        )}
+                        <h1 className="font-headline font-bold text-lg tracking-tight text-on-surface">{title}</h1>
+                    </div>
+                    {actions && (
+                        <button className="p-2 rounded-full hover:bg-black/5 text-primary">
+                            <span className="material-symbols-outlined">more_vert</span>
+                        </button>
+                    )}
+                </header>
+            );
+        };
+
+        // --- Screens ---
+
+        const WelcomeScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="flex flex-col min-h-screen bg-background relative overflow-hidden">
+                    <div className="relative w-full h-[45%] overflow-hidden bg-primary-container">
+                        <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHUiJaI3U96WKZl4o_1LSIZWlahdRYEt4RvR0IWIk-bF2XSTVHjUJabXnpvqzkBguiACx3Spgp6O27KRokDq0aqVvb3qLV87RRLnAbO29ydbj7pha5Ky0l458QnbRHjUfXLC4uP0XIGp_s01Mjobx3OeaqSrnVa92LkVTSZu5zzEIRZzXfLF_x-ifMOQqrnhocUvd_3dVap4Dpg2hr9Gu3xZWKi2GihmEHORXmM4zJ6pRGeMBtgD5M5ZxRRlb1XIikFsBx83PILjm7" alt="Hero"/>
+                    </div>
+                    <div className="flex-1 bg-surface-container-lowest -mt-4 rounded-t-[16px] z-10 flex flex-col p-6 text-center">
+                        <h1 className="font-headline font-bold text-2xl tracking-tight mt-4">Your AI Assistant</h1>
+                        <p className="font-body text-base mt-3 text-on-surface-variant px-4 leading-relaxed">Experience the future of creativity and productivity. Curated intelligence at your fingertips.</p>
+                        <div className="mt-8 flex flex-col gap-3">
+                            <button onClick={() => navigate('/onboarding-1')} className="h-[52px] rounded-full editorial-gradient text-on-primary font-label font-medium shadow-lg">Get Started</button>
+                            <button onClick={() => navigate('/login')} className="h-[52px] rounded-full border border-outline-variant text-primary font-label font-medium">I already have an account</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const LoginScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen pt-[100px] px-4 pb-8 flex flex-col">
+                    <TopAppBar title="Welcome Back" />
+                    <div className="mt-6 mb-8">
+                        <h2 className="font-headline font-extrabold text-3xl">Login</h2>
+                        <p className="text-on-surface-variant">Good to see you again</p>
+                    </div>
+                    <div className="space-y-6">
+                        <div className="relative">
+                            <label className="absolute -top-2.5 left-3 px-1 bg-background text-xs font-medium text-primary z-10">Email</label>
+                            <input className="w-full h-14 px-4 rounded-xl border-2 border-primary bg-transparent" defaultValue="alexander.king@atelier.ai"/>
+                        </div>
+                        <div className="relative">
+                            <label className="absolute -top-2.5 left-3 px-1 bg-background text-xs font-medium text-outline z-10">Password</label>
+                            <input className="w-full h-14 px-4 rounded-xl border border-outline-variant bg-transparent" type="password" defaultValue="password123"/>
+                        </div>
+                        <button onClick={() => navigate('/home')} className="w-full h-[52px] rounded-full editorial-gradient text-on-primary font-bold shadow-lg">Login</button>
+                        <div className="flex justify-center gap-2">
+                            <span className="text-sm text-on-surface-variant">New here?</span>
+                            <button onClick={() => navigate('/register')} className="text-sm font-bold text-primary">Register</button>
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        const RegisterScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen pt-[100px] px-4 pb-8 flex flex-col">
+                    <TopAppBar title="Create Account" />
+                    <div className="mt-6 mb-10">
+                        <h2 className="font-headline font-extrabold text-[2.5rem] leading-tight">Join the <span className="text-primary">Super Mcp.</span></h2>
+                    </div>
+                    <div className="space-y-4">
+                        <input className="w-full h-14 px-4 rounded-xl border border-outline-variant bg-transparent" placeholder="Full Name"/>
+                        <input className="w-full h-14 px-4 rounded-xl border border-outline-variant bg-transparent" placeholder="Email"/>
+                        <input className="w-full h-14 px-4 rounded-xl border border-outline-variant bg-transparent" type="password" placeholder="Password"/>
+                        <button onClick={() => navigate('/onboarding-1')} className="w-full h-[52px] rounded-full editorial-gradient text-on-primary font-bold shadow-lg mt-4">Create Account</button>
+                        <button className="w-full h-[52px] rounded-full border border-outline-variant flex items-center justify-center gap-3">
+                            <img className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7GpFuJDpIa5tSuD594Ozdywr-pmxWKL71iqKO2r3EgBs4QbTtXrODaI9G-zfzcJb9i5vtrWus9NNXxuEat7dWdrozSHe56o11jYIskbkI0Fgjm7NRZNpsswSeQD5FdKldpUvnzCD_BYFYMWrlRN47D4uobLVzDK5M6s2BgvtEtw4vRQ3v4Q_0VTg9DUGbvkrgdLLrbGItIsBRsrD-AwDgk-8qaaJKXEoBFSDQ2a8ZhLe_Xu1bTqBIKx34JhbnkFSS5TFJ35OSSK0a" alt="Google"/>
+                            Continue with Google
+                        </button>
+                    </div>
+                </main>
+            );
+        };
+
+        const OnboardingStep1 = () => {
+            const navigate = useNavigate();
+            const [selected, setSelected] = useState(0);
+            return (
+                <main className="min-h-screen px-4 pt-16 flex flex-col">
+                    <div className="h-1 bg-surface-container rounded-full overflow-hidden mb-8">
+                        <div className="h-full bg-primary w-1/3 transition-all duration-500"></div>
+                    </div>
+                    <p className="font-label text-sm text-secondary">Step 1 of 3</p>
+                    <h1 className="font-headline text-3xl font-extrabold mt-2 leading-tight">How will you use it?</h1>
+                    <div className="flex flex-col gap-3 mt-8">
+                        {[
+                            { icon: 'person', title: 'Personal Use', desc: 'For individual projects' },
+                            { icon: 'groups', title: 'Team Workspace', desc: 'Collaborate with squads' },
+                            { icon: 'business_center', title: 'Agency / Business', desc: 'Scale production' }
+                        ].map((item, idx) => (
+                            <div 
+                                key={idx} 
+                                onClick={() => setSelected(idx)}
+                                className={`flex items-center p-4 rounded-xl border-2 transition-all cursor-pointer ${selected === idx ? 'bg-primary-container border-primary' : 'bg-surface-container-lowest border-outline-variant/30'}`}
+                            >
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${selected === idx ? 'bg-white/40' : 'bg-primary-container/20'}`}>
+                                    <span className="material-symbols-outlined text-primary">{item.icon}</span>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-bold">{item.title}</p>
+                                    <p className="text-xs opacity-70">{item.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-auto pb-10 space-y-4">
+                        <button onClick={() => navigate('/onboarding-2')} className="w-full h-[52px] rounded-full editorial-gradient text-on-primary font-bold">Continue</button>
+                        <button onClick={() => navigate('/home')} className="w-full py-2 text-primary font-medium">Skip for now</button>
+                    </div>
+                </main>
+            );
+        };
+
+        const OnboardingStep2 = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen px-4 pt-16 flex flex-col">
+                    <div className="h-1 bg-surface-container rounded-full overflow-hidden mb-8">
+                        <div className="h-full bg-primary w-2/3 transition-all duration-500"></div>
+                    </div>
+                    <p className="font-label text-sm text-primary">Step 2 of 3</p>
+                    <h1 className="font-headline text-3xl font-extrabold mt-1">Connect an app</h1>
+                    <div className="grid grid-cols-2 gap-3 mt-8">
+                        {['cloud', 'description', 'code', 'shopping_bag', 'palette', 'forum'].map((icon, idx) => (
+                            <div key={idx} className="bg-surface-container-lowest rounded-xl p-4 flex flex-col items-center border border-outline-variant/10 shadow-sm">
+                                <span className="material-symbols-outlined text-primary text-3xl mb-2">{icon}</span>
+                                <span className="text-xs font-bold">Service {idx+1}</span>
+                                <button className="mt-4 w-full py-1.5 bg-secondary-container text-on-secondary-container rounded-full text-xs font-bold">Connect</button>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="mt-auto pb-10 space-y-4">
+                        <button onClick={() => navigate('/onboarding-3')} className="w-full h-[52px] rounded-full editorial-gradient text-on-primary font-bold">Continue</button>
+                        <button onClick={() => navigate('/home')} className="w-full py-2 text-on-surface-variant font-medium">Skip</button>
+                    </div>
+                </main>
+            );
+        };
+
+        const OnboardingStep3 = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen px-4 pt-16 flex flex-col overflow-y-auto">
+                    <div className="h-1 bg-surface-container rounded-full overflow-hidden mb-8">
+                        <div className="h-full bg-primary w-full transition-all duration-500"></div>
+                    </div>
+                    <h1 className="font-headline text-3xl font-extrabold">Choose your plan</h1>
+                    <div className="space-y-4 mt-8 pb-10">
+                        <div className="p-6 bg-surface-container-low border border-outline-variant/20 rounded-xl">
+                            <h2 className="text-xl font-bold">Free</h2>
+                            <p className="text-3xl font-extrabold mt-2">$0 <span className="text-sm font-normal">/mo</span></p>
+                            <button onClick={() => navigate('/home')} className="w-full h-12 border border-primary text-primary rounded-full mt-6 font-bold">Start Free</button>
+                        </div>
+                        <div className="p-6 bg-primary-container relative rounded-xl shadow-xl">
+                            <span className="absolute -top-3 right-6 bg-tertiary text-on-tertiary px-3 py-1 rounded-full text-[10px] font-bold uppercase">Popular</span>
+                            <h2 className="text-xl font-bold">Pro</h2>
+                            <p className="text-3xl font-extrabold mt-2">$12 <span className="text-sm font-normal">/mo</span></p>
+                            <button onClick={() => navigate('/home')} className="w-full h-12 editorial-gradient text-on-primary rounded-full mt-6 font-bold">Start Pro Trial</button>
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        const HomeScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen pt-[112px] pb-[120px] px-4 space-y-8 overflow-y-auto">
+                    <header className="fixed top-0 w-full pt-[44px] pb-4 px-4 bg-background z-50 flex flex-col">
+                        <div className="flex justify-between items-center mb-2">
+                            <button className="material-symbols-outlined text-primary">menu</button>
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    <span className="material-symbols-outlined text-primary">notifications</span>
+                                    <span className="absolute top-0 right-0 w-4 h-4 bg-error text-white text-[10px] flex items-center justify-center rounded-full">3</span>
+                                </div>
+                                <img className="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcMMfvj_L6W_8_obmqR1SA81S3KJ2RGxapxIuFl7RQjLY9FEQQ8a_RWYQEhSMNr3BUtie-Hm9Sb3NuEPYSIU_O33RZB1gcMVqR2_aSLlEfBBJ_lZYmBaYkx_H1f3dQ5l23QZqRJ69io4o4pxYC0gw-wLRabGjGw6drXam1A9CK9HIjsSGclVDsUIrBY3hD9fMKBqEsxjEtclarA3CIOyqRTPoW-jQSKedRWcht6tTOwUe921MmD3ZcMFciKg9Uc696YEuGNwl2wp4l" alt="Profile"/>
+                            </div>
+                        </div>
+                        <h1 className="font-headline font-bold text-lg">Good morning, Alex 👋</h1>
+                    </header>
+                    <section className="grid grid-cols-2 gap-4">
+                        {[{v:'24',l:'Chats',i:'chat_bubble'}, {v:'12',l:'Tasks',i:'assignment_turned_in'}, {v:'68%',l:'Usage',i:'query_stats'}, {v:'3',l:'Apps',i:'apps'}].map((item,idx)=>(
+                            <div key={idx} className="bg-surface-container rounded-xl p-4 flex flex-col justify-between h-[120px]">
+                                <span className="material-symbols-outlined text-primary">{item.i}</span>
+                                <div>
+                                    <div className="text-2xl font-extrabold">{item.v}</div>
+                                    <div className="text-[10px] uppercase font-bold text-on-surface-variant">{item.l}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </section>
+                    <section>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="font-headline font-bold">Recent Conversations</h2>
+                            <button onClick={()=>navigate('/conversations')} className="text-primary text-sm font-bold">See all</button>
+                        </div>
+                        <div className="space-y-2.5">
+                            {[1,2,3].map(i => (
+                                <div key={i} onClick={()=>navigate('/chat')} className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/10 flex items-center gap-4 cursor-pointer">
+                                    <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-on-primary-container">auto_awesome</span>
+                                    </div>
+                                    <div className="flex-1 truncate">
+                                        <h3 className="font-bold text-sm">Conversation {i}</h3>
+                                        <p className="text-xs text-on-surface-variant truncate">Latest message snippet goes here...</p>
+                                    </div>
+                                    <span className="material-symbols-outlined text-outline-variant">chevron_right</span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                    <BottomNavBar />
+                </main>
+            );
+        };
+
+        const ChatScreen = () => {
+            return (
+                <div className="min-h-screen flex flex-col bg-background">
+                    <TopAppBar title="AI Assistant" />
+                    <main className="flex-1 pt-[116px] pb-[100px] px-4 space-y-6 overflow-y-auto">
+                        <div className="flex flex-col gap-2 items-start max-w-[85%]">
+                            <div className="bg-surface-variant p-4 rounded-xl rounded-tl-none">
+                                <p className="text-[15px]">Hello! How can I help you today?</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2 items-end self-end max-w-[85%]">
+                            <div className="editorial-gradient text-on-primary p-4 rounded-xl rounded-tr-none">
+                                <p className="text-[15px]">I need some branding references for the new project.</p>
+                            </div>
+                        </div>
+                        <div className="bg-surface-container-low p-4 rounded-xl flex flex-col gap-2 animate-pulse">
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary text-sm">search</span>
+                                <span className="text-sm font-medium">Searching for references...</span>
+                            </div>
+                        </div>
+                    </main>
+                    <footer className="fixed bottom-0 w-full p-4 bg-background">
+                        <div className="max-w-3xl mx-auto bg-surface-variant rounded-full p-2 flex items-center">
+                            <button className="w-10 h-10 rounded-full flex items-center justify-center"><span className="material-symbols-outlined">add</span></button>
+                            <input className="flex-1 bg-transparent border-none focus:ring-0 text-sm" placeholder="Message AI..."/>
+                            <button className="w-10 h-10 bg-primary text-on-primary rounded-full flex items-center justify-center"><span className="material-symbols-outlined filled-icon">send</span></button>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const ConversationsScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen pt-[100px] pb-[100px] px-4">
+                    <TopAppBar title="Conversations" />
+                    <div className="my-4 bg-surface-container-low rounded-full px-4 flex items-center h-12">
+                        <span className="material-symbols-outlined mr-2">search</span>
+                        <input className="bg-transparent border-none focus:ring-0 w-full" placeholder="Search..."/>
+                    </div>
+                    <div className="space-y-4">
+                        {[1,2,3,4].map(i => (
+                            <div key={i} onClick={()=>navigate('/chat')} className="flex items-center gap-4 p-2 hover:bg-surface-container-high rounded-xl cursor-pointer">
+                                <div className="w-12 h-12 rounded-full bg-primary-container flex-shrink-0"></div>
+                                <div className="flex-1 border-b border-outline-variant/10 pb-4">
+                                    <div className="flex justify-between items-baseline">
+                                        <h3 className="font-bold">Project Discussion {i}</h3>
+                                        <span className="text-[10px] text-outline">12:45 PM</span>
+                                    </div>
+                                    <p className="text-sm text-on-surface-variant line-clamp-1">Last message sent from AI was very helpful...</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <BottomNavBar />
+                </main>
+            );
+        };
+
+        const UsageScreen = () => {
+            return (
+                <main className="min-h-screen pt-[100px] pb-[100px] px-4 space-y-6">
+                    <TopAppBar title="Usage" />
+                    <div className="grid grid-cols-2 gap-4">
+                        {['Tokens Used', 'API Calls', 'Active Apps', 'Plan Remaining'].map((l,idx)=>(
+                            <div key={idx} className="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant/15">
+                                <div className="text-[10px] uppercase font-bold text-outline mb-1">{l}</div>
+                                <div className="text-2xl font-extrabold text-primary">1.2M</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="bg-surface-container-lowest p-6 rounded-3xl shadow-sm">
+                        <h2 className="font-bold mb-6">Usage Over Time</h2>
+                        <div className="h-32 flex items-end justify-between gap-1">
+                            {[40,65,50,85,30,70,45].map((h,i)=>(
+                                <div key={i} className="flex-1 bg-primary-container rounded-t-lg" style={{height: `${h}%`}}></div>
+                            ))}
+                        </div>
+                    </div>
+                    <BottomNavBar />
+                </main>
+            );
+        };
+
+        const TasksScreen = () => {
+            return (
+                <main className="min-h-screen pt-[100px] pb-[100px] px-4">
+                    <TopAppBar title="Tasks" />
+                    <nav className="flex border-b border-outline-variant/10 mb-6">
+                        <button className="flex-1 py-3 border-b-2 border-primary text-primary font-bold">Running</button>
+                        <button className="flex-1 py-3 text-on-surface-variant font-medium">Completed</button>
+                        <button className="flex-1 py-3 text-on-surface-variant font-medium">Failed</button>
+                    </nav>
+                    <div className="space-y-4">
+                        <div className="p-4 bg-surface-container-lowest rounded-xl flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+                                <div>
+                                    <h3 className="font-bold text-sm">Analyzing Clusters</h3>
+                                    <p className="text-xs text-on-surface-variant">2m remaining</p>
+                                </div>
+                            </div>
+                            <span className="px-2 py-0.5 bg-primary-container/20 text-primary text-[10px] font-bold uppercase rounded">Running</span>
+                        </div>
+                        <div className="p-4 bg-surface-container-lowest rounded-xl flex items-center justify-between shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-primary">model_training</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm">Prompt Refinement</h3>
+                                    <p className="text-xs text-on-surface-variant">45s remaining</p>
+                                </div>
+                            </div>
+                            <span className="px-2 py-0.5 bg-secondary-container/50 text-on-secondary-container text-[10px] font-bold uppercase rounded">Active</span>
+                        </div>
+                    </div>
+                    <BottomNavBar />
+                </main>
+            );
+        };
+
+        const ProfileScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <main className="min-h-screen pt-[100px] pb-[120px] px-4 space-y-6 overflow-y-auto">
+                    <TopAppBar title="Settings" />
+                    <section className="flex flex-col items-center text-center py-4">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-secondary-container mb-4 ring-4 ring-surface-container-low">
+                            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuARVQ1L1lCylCKzUK6Qhl6iUkMeAAQYON36ItlFbCMjdybpoOE2agV5Pyl2T_LNTcbU7TBvYN-ojEHIUOqFRHy9WWJ1peEcMqGoIY0rQRkdYMim1gf1gDsgpo3fUmBqt9J9JIcvtUC4RfAlX9v3LZLgGkCDxwiikMXpPLVn7cH888gvQP5kTE_O_3Gka7LtFWZ60CP03hCv4VjEM-yupt2e6hXs8RvxD53zwxqoc5XWCJcCfIwxKcKs42xuvRAjL9A_xPAwkh17NXyd" alt="User"/>
+                        </div>
+                        <h2 className="text-2xl font-bold">Julian Sterling</h2>
+                        <p className="text-on-surface-variant">julian.s@atelier-ai.com</p>
+                    </section>
+                    <section className="space-y-2">
+                        <h3 className="px-4 text-[10px] font-bold uppercase tracking-widest text-primary">Account</h3>
+                        <div className="bg-surface-container-lowest rounded-xl overflow-hidden">
+                            <div className="flex items-center justify-between p-4 hover:bg-surface-container-low cursor-pointer" onClick={()=>navigate('/billing')}>
+                                <div className="flex items-center gap-4">
+                                    <span className="material-symbols-outlined">payments</span>
+                                    <span>Billing & Plan</span>
+                                </div>
+                                <span className="material-symbols-outlined text-outline">chevron_right</span>
+                            </div>
+                            <div className="flex items-center justify-between p-4 hover:bg-surface-container-low cursor-pointer" onClick={()=>navigate('/connected-apps')}>
+                                <div className="flex items-center gap-4">
+                                    <span className="material-symbols-outlined">hub</span>
+                                    <span>Connected Apps</span>
+                                </div>
+                                <span className="material-symbols-outlined text-outline">chevron_right</span>
+                            </div>
+                        </div>
+                    </section>
+                    <section className="space-y-4 pt-6">
+                        <button onClick={()=>navigate('/')} className="w-full h-12 border-2 border-error text-error rounded-full font-bold">Log Out</button>
+                    </section>
+                    <BottomNavBar />
+                </main>
+            );
+        };
+
+        const BillingScreen = () => {
+            return (
+                <main className="min-h-screen pt-[100px] px-4 space-y-6">
+                    <TopAppBar title="Billing" />
+                    <div className="p-6 bg-surface-container-lowest rounded-xl border-t-2 border-primary-container shadow-sm">
+                        <span className="text-[10px] uppercase font-bold text-primary">Current Plan</span>
+                        <h2 className="text-3xl font-extrabold mt-1">Super Mcp Pro</h2>
+                        <div className="mt-4 p-4 bg-surface-container-low rounded-lg flex items-center gap-3">
+                            <span className="material-symbols-outlined text-primary">event_repeat</span>
+                            <div>
+                                <p className="text-sm font-bold">Next renewal</p>
+                                <p className="text-xs text-on-surface-variant">Oct 24, 2023</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold uppercase">Invoice History</h3>
+                        {[1,2,3].map(i => (
+                            <div key={i} className="p-4 bg-surface-container-lowest rounded-xl flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold">Oct 24, 2023</p>
+                                    <p className="text-xs text-outline">INV-00{i}</p>
+                                </div>
+                                <div className="text-right flex items-center gap-4">
+                                    <span className="text-sm font-bold">$19.99</span>
+                                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded">Paid</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </main>
+            );
+        };
+
+        const ConnectedAppsScreen = () => {
+            return (
+                <main className="min-h-screen pt-[100px] px-4 space-y-8">
+                    <TopAppBar title="Connected Apps" />
+                    <div className="space-y-3">
+                        {['Google Drive', 'Slack'].map((app, idx) => (
+                            <div key={idx} className="p-4 bg-surface-container-lowest rounded-xl flex items-center justify-between shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-primary">{idx === 0 ? 'cloud' : 'chat'}</span>
+                                    </div>
+                                    <span className="font-bold">{app}</span>
+                                </div>
+                                <span className="text-[10px] font-bold text-primary px-2 py-1 bg-primary/10 rounded">Connected</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="space-y-3">
+                        <h2 className="font-bold text-lg opacity-50">Coming Soon</h2>
+                        {['Notion', 'Discord'].map((app, idx) => (
+                            <div key={idx} className="p-4 bg-surface-container-lowest rounded-xl flex items-center justify-between opacity-60 grayscale border border-dashed border-outline-variant">
+                                <span className="font-bold">{app}</span>
+                                <span className="text-[10px] font-bold text-outline">Coming Q4</span>
+                            </div>
+                        ))}
+                    </div>
+                </main>
+            );
+        };
+
+        // --- App Component ---
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<WelcomeScreen />} />
+                        <Route path="/login" element={<LoginScreen />} />
+                        <Route path="/register" element={<RegisterScreen />} />
+                        <Route path="/onboarding-1" element={<OnboardingStep1 />} />
+                        <Route path="/onboarding-2" element={<OnboardingStep2 />} />
+                        <Route path="/onboarding-3" element={<OnboardingStep3 />} />
+                        <Route path="/home" element={<HomeScreen />} />
+                        <Route path="/chat" element={<ChatScreen />} />
+                        <Route path="/conversations" element={<ConversationsScreen />} />
+                        <Route path="/usage" element={<UsageScreen />} />
+                        <Route path="/tasks" element={<TasksScreen />} />
+                        <Route path="/profile" element={<ProfileScreen />} />
+                        <Route path="/billing" element={<BillingScreen />} />
+                        <Route path="/connected-apps" element={<ConnectedAppsScreen />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>
