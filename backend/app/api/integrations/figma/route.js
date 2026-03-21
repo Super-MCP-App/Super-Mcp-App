@@ -11,7 +11,10 @@ export async function GET(request) {
   if (action === 'auth') {
     const auth = await getAuthenticatedClient(request);
     if (auth.error) return auth.error;
-    const url = getFigmaAuthUrl(auth.user.id);
+    
+    const appRedirect = searchParams.get('redirect_url') || 'mcpapp://mcp-auth';
+    const stateObj = JSON.stringify({ u: auth.user.id, r: appRedirect });
+    const url = getFigmaAuthUrl(stateObj);
     return successResponse({ authUrl: url });
   }
 

@@ -2,8 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, Alert } from 'react-native';
 import { Text, IconButton, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { colors } from '../theme/colors';
 import { integrationsApi } from '../services/api';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const providerIcons = {
   figma: { icon: 'palette-swatch', color: '#1e1e1e', bg: '#f0f0f0' },
@@ -33,16 +36,28 @@ export default function ConnectedAppsScreen({ navigation }) {
 
   const handleConnect = async (provider) => {
     try {
+      let data;
       if (provider === 'figma') {
-        const data = await integrationsApi.figmaAuth();
-        if (data.authUrl) Linking.openURL(data.authUrl);
+        data = await integrationsApi.figmaAuth();
       } else if (provider === 'canva') {
-        const data = await integrationsApi.canvaAuth();
-        if (data.authUrl) Linking.openURL(data.authUrl);
+        data = await integrationsApi.canvaAuth();
       } else {
         Alert.alert('Coming Soon', `${provider} integration is coming soon!`);
+        return;
+      }
+      
+      if (data?.authUrl) {
+        // Use the custom scheme matching app.json
+        const redirectUrl = Linking.createURL('mcp-auth');
+        const result = await WebBrowser.openAuthSessionAsync(data.authUrl, redirectUrl);
+        
+        if (result.type === 'success' || result.type === 'dismiss') {
+          // If success (handled deep link) or user dismissed, fetch apps to update UI
+          fetchApps();
+        }
       }
     } catch (e) {
+      console.error(e);
       Alert.alert('Info', `${provider} OAuth requires client credentials configured in backend .env`);
     }
   };

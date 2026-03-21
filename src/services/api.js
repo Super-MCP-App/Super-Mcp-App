@@ -91,7 +91,8 @@ export const integrationsApi = {
     apiFetch('/integrations', { method: 'DELETE', body: JSON.stringify({ provider }) }),
 
   // Figma
-  figmaAuth: () => apiFetch('/integrations/figma?action=auth'),
+  figmaAuth: (redirectUrl = '') => 
+    apiFetch(`/integrations/figma?action=auth&redirect_url=${encodeURIComponent(redirectUrl)}`),
   figmaStatus: () => apiFetch('/integrations/figma'),
   figmaGetFile: (fileKey) =>
     apiFetch('/integrations/figma', { method: 'POST', body: JSON.stringify({ action: 'getFile', fileKey }) }),
@@ -99,7 +100,8 @@ export const integrationsApi = {
     apiFetch('/integrations/figma', { method: 'POST', body: JSON.stringify({ action: 'getImages', fileKey, nodeIds }) }),
 
   // Canva
-  canvaAuth: () => apiFetch('/integrations/canva?action=auth'),
+  canvaAuth: (redirectUrl = '') => 
+    apiFetch(`/integrations/canva?action=auth&redirect_url=${encodeURIComponent(redirectUrl)}`),
   canvaStatus: () => apiFetch('/integrations/canva'),
   canvaGetDesign: (designId) =>
     apiFetch('/integrations/canva', { method: 'POST', body: JSON.stringify({ action: 'getDesign', designId }) }),
