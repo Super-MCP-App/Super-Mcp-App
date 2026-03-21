@@ -119,20 +119,24 @@ export default function ConnectedAppsScreen({ navigation }) {
         {/* Connected Section */}
         {connected.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>CONNECTED</Text>
-            {connected.map((app) => (
-              <AppCard key={app.provider} app={app} onPress={() => handleDisconnect(app.provider)} buttonLabel="Disconnect" buttonStyle="outline" />
-            ))}
+            <Text style={styles.sectionTitle}>CONNECTED APPS</Text>
+            <View style={styles.grid}>
+              {connected.map((app) => (
+                <GridCard key={app.provider} app={app} onPress={() => handleDisconnect(app.provider)} buttonLabel="Manage" status="connected" />
+              ))}
+            </View>
           </View>
         )}
 
         {/* Available Section */}
         {available.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>AVAILABLE MCP PROVIDERS</Text>
-            {available.map((app) => (
-              <AppCard key={app.provider} app={app} onPress={() => handleConnect(app.provider)} buttonLabel="Connect" buttonStyle="filled" />
-            ))}
+            <Text style={styles.sectionTitle}>EXPLORE MCP PROVIDERS</Text>
+            <View style={styles.grid}>
+              {available.map((app) => (
+                <GridCard key={app.provider} app={app} onPress={() => handleConnect(app.provider)} buttonLabel="Connect" status="available" />
+              ))}
+            </View>
           </View>
         )}
 
@@ -140,9 +144,11 @@ export default function ConnectedAppsScreen({ navigation }) {
         {comingSoon.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>COMING SOON</Text>
-            {comingSoon.map((app) => (
-              <AppCard key={app.provider} app={app} onPress={() => Alert.alert('Coming Soon', `${app.provider_display_name} integration is under development`)} buttonLabel="Notify Me" buttonStyle="outline" />
-            ))}
+            <View style={styles.grid}>
+              {comingSoon.map((app) => (
+                <GridCard key={app.provider} app={app} onPress={() => Alert.alert('Coming Soon', `${app.provider_display_name} integration is under development`)} buttonLabel="Notify" status="coming_soon" />
+              ))}
+            </View>
           </View>
         )}
 
@@ -158,30 +164,32 @@ export default function ConnectedAppsScreen({ navigation }) {
   );
 }
 
-function AppCard({ app, onPress, buttonLabel, buttonStyle }) {
+function GridCard({ app, onPress, buttonLabel, status }) {
   const icons = providerIcons[app.provider] || { icon: 'apps', color: '#fff', bg: colors.primary };
+  const isConnected = status === 'connected';
+  const isComing = status === 'coming_soon';
+
   return (
-    <View style={cardStyles.card}>
-      <View style={cardStyles.row}>
-        <View style={[cardStyles.icon, { backgroundColor: icons.bg }]}>
-          <MaterialCommunityIcons name={icons.icon} size={22} color={icons.color} />
-        </View>
-        <View style={cardStyles.info}>
-          <Text style={cardStyles.name}>{app.provider_display_name || app.provider}</Text>
-          <Text style={cardStyles.desc} numberOfLines={2}>{app.description || 'MCP integration'}</Text>
-          {app.scopes && <Text style={cardStyles.scopes}>Scopes: {app.scopes}</Text>}
-        </View>
+    <TouchableOpacity 
+      style={[styles.gridCard, isConnected && styles.gridCardConnected]} 
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <View style={[styles.gridIcon, { backgroundColor: icons.bg }]}>
+        <MaterialCommunityIcons name={icons.icon} size={28} color={icons.color} />
+        {isConnected && (
+          <View style={styles.activeBadge}>
+            <MaterialCommunityIcons name="check" size={10} color="#fff" />
+          </View>
+        )}
       </View>
-      <Button
-        mode={buttonStyle === 'filled' ? 'contained' : 'outlined'}
-        onPress={onPress}
-        style={buttonStyle === 'filled' ? cardStyles.connectBtn : cardStyles.outlineBtn}
-        labelStyle={buttonStyle === 'filled' ? cardStyles.connectLabel : cardStyles.outlineLabel}
-        compact
-      >
-        {buttonLabel}
-      </Button>
-    </View>
+      <Text style={styles.gridName} numberOfLines={1}>{app.provider_display_name || app.provider}</Text>
+      <Text style={styles.gridDesc} numberOfLines={2}>{app.description || 'MCP integration'}</Text>
+      
+      <View style={[styles.gridBtn, isConnected ? styles.gridBtnConnected : (isComing ? styles.gridBtnComing : styles.gridBtnAvailable)]}>
+        <Text style={[styles.gridBtnText, isConnected && { color: colors.primary }]}>{buttonLabel}</Text>
+      </View>
+    </TouchableOpacity>
   );
 }
 
@@ -199,25 +207,37 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 10, fontWeight: '700', color: colors.primary, letterSpacing: 1.5, marginBottom: 12,
   },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 12 },
+  gridCard: {
+    width: '48%',
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: 24,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.outlineVariant + '15',
+    marginBottom: 4,
+  },
+  gridCardConnected: {
+    borderColor: colors.primary + '30',
+    backgroundColor: colors.primaryContainer + '08',
+  },
+  gridIcon: {
+    width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4,
+  },
+  activeBadge: {
+    position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, 
+    backgroundColor: '#059669', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff',
+  },
+  gridName: { fontSize: 15, fontWeight: '800', color: colors.onSurface, textAlign: 'center' },
+  gridDesc: { fontSize: 10, color: colors.onSurfaceVariant, textAlign: 'center', marginTop: 4, lineHeight: 14, height: 28 },
+  gridBtn: { marginTop: 14, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 12, width: '100%', alignItems: 'center' },
+  gridBtnAvailable: { backgroundColor: colors.primary },
+  gridBtnConnected: { backgroundColor: colors.primaryContainer + '40' },
+  gridBtnComing: { backgroundColor: colors.surfaceContainerHigh },
+  gridBtnText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   emptyState: { alignItems: 'center', paddingVertical: 60 },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.onSurface, marginTop: 12 },
   emptySubtitle: { fontSize: 13, color: colors.onSurfaceVariant, marginTop: 4 },
-});
-
-const cardStyles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surfaceContainerLowest, borderRadius: 16, padding: 16, marginBottom: 10,
-  },
-  row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
-  icon: {
-    width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 14,
-  },
-  info: { flex: 1 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.onSurface },
-  desc: { fontSize: 12, color: colors.onSurfaceVariant, marginTop: 2, lineHeight: 18 },
-  scopes: { fontSize: 10, color: colors.outline, marginTop: 4, fontFamily: 'monospace' },
-  connectBtn: { borderRadius: 20, backgroundColor: colors.primary },
-  connectLabel: { color: colors.onPrimary, fontWeight: '600', fontSize: 13 },
-  outlineBtn: { borderRadius: 20, borderColor: colors.outlineVariant },
-  outlineLabel: { color: colors.onSurfaceVariant, fontWeight: '600', fontSize: 13 },
 });
