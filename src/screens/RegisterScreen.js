@@ -103,7 +103,13 @@ export default function RegisterScreen({ navigation }) {
 
           <Button
             mode="outlined"
-            onPress={() => signInWithGoogle()}
+            onPress={async () => {
+              try {
+                await signInWithGoogle();
+              } catch (error) {
+                Alert.alert('Google Login Failed', error.message);
+              }
+            }}
             style={styles.googleButton}
             labelStyle={styles.googleLabel}
             contentStyle={styles.buttonContent}
