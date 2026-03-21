@@ -6,10 +6,6 @@ import { theme } from './src/theme';
 import AppNavigator from './src/navigation/AppNavigator';
 import { supabase } from './src/services/supabase';
 import { colors } from './src/theme/colors';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-
-WebBrowser.maybeCompleteAuthSession();
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -51,17 +47,8 @@ function MainApp() {
       }
     });
 
-    // Handle deep linking for OAuth redirects
-    const subscriptionLinking = Linking.addEventListener('url', (event) => {
-      console.log('App received URL:', event.url);
-      if (event.url.includes('google-auth')) {
-        checkAuth(); // Re-check session when returning from auth
-      }
-    });
-
     return () => {
       subscription?.unsubscribe();
-      subscriptionLinking.remove();
     };
   }, []);
 

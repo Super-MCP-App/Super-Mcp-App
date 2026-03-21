@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button } from 'react-native-paper';
 import { colors } from '../theme/colors';
-import { signIn, signInWithGoogle } from '../services/supabase';
+import { signIn } from '../services/supabase';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -77,30 +77,6 @@ export default function LoginScreen({ navigation }) {
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
 
-          <View style={styles.dividerContainer}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.divider} />
-          </View>
-
-          <Button
-            mode="outlined"
-            onPress={async () => {
-              try {
-                await signInWithGoogle();
-              } catch (error) {
-                Alert.alert('Google Login Failed', error.message);
-              }
-            }}
-            style={styles.googleButton}
-            labelStyle={styles.googleLabel}
-            contentStyle={styles.buttonContent}
-            icon="google"
-            textColor={colors.onSurface}
-          >
-            Continue with Google
-          </Button>
-
           <Button
             mode="text"
             onPress={() => navigation.navigate('Register')}
@@ -132,9 +108,4 @@ const styles = StyleSheet.create({
   loginLabel: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
   buttonContent: { height: 52 },
   linkLabel: { color: colors.primary, fontSize: 13 },
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 8 },
-  divider: { flex: 1, height: 1, backgroundColor: colors.outlineVariant + '40' },
-  dividerText: { marginHorizontal: 16, fontSize: 12, color: colors.onSurfaceVariant, fontWeight: '600' },
-  googleButton: { borderRadius: 28, borderColor: colors.outlineVariant, borderWidth: 1 },
-  googleLabel: { fontWeight: '600', fontSize: 15 },
 });

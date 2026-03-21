@@ -9,7 +9,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     storage: AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
+    detectSessionInUrl: false,
   },
 });
 
@@ -26,23 +26,6 @@ export async function signUp(email, password, fullName) {
 
 export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-  return data;
-}
-
-import * as Linking from 'expo-linking';
-
-export async function signInWithGoogle() {
-  const redirectUrl = Linking.createURL('google-auth');
-  console.log('Redirecting to:', redirectUrl);
-  
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl,
-      skipBrowserRedirect: false,
-    },
-  });
   if (error) throw error;
   return data;
 }
