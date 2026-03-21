@@ -4,6 +4,16 @@ First off, thank you for considering contributing to Super-MCP-App! It's people 
 
 We welcome all types of contributions, including bug fixes, feature additions, documentation improvements, and design tweaks.
 
+## ✨ Vibecoders Welcome!
+Are you a **vibecoder**? Do you rely heavily on AI generation, rapid prototyping, and coding by intuition to ship cool things fast? **You belong here!** 
+
+We actively encourage using AI tools (like Claude, ChatGPT, Cursor, Copilot) to help write, refactor, and review your code. 
+- **Ship Fast, Refactor Later:** If an AI-generated PR introduces an awesome feature but the code is a bit messy, submit it anyway! Tag it as a WIP (Work In Progress) and the maintainers will help you mold it into production-ready code.
+- **Prompt transparently:** Feel free to include the prompts you used in your PR descriptions so others can learn from your workflow.
+- **Vibe Checks:** We care more about the end-user experience (the UI/UX "vibes") than enforcing overly strict boilerplate. If it looks great and runs smoothly, you're on the right track.
+
+---
+
 ## 📝 Code of Conduct
 By participating in this project, you agree to abide by our Code of Conduct. Please be respectful, inclusive, and collaborative in all your interactions.
 
