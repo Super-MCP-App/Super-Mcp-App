@@ -91,8 +91,25 @@ export default function ConnectedAppsScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <IconButton icon="arrow-left" iconColor={colors.primary} size={24} onPress={() => navigation.goBack()} />
-        <Text style={styles.headerTitle}>Connected Apps</Text>
+        <View style={styles.headerTop}>
+          <IconButton icon="arrow-left" iconColor={colors.primary} size={24} onPress={() => navigation.goBack()} />
+          <Text style={styles.headerTitle}>Connected Apps</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.mcpStrip}>
+          {apps.map(app => {
+            const icons = providerIcons[app.provider] || { icon: 'apps', color: colors.onSurfaceVariant };
+            const isConnected = app.status === 'connected';
+            return (
+              <View key={app.provider} style={styles.mcpChip}>
+                <View style={[styles.mcpDot, { backgroundColor: isConnected ? '#059669' : colors.outlineVariant }]} />
+                <MaterialCommunityIcons name={icons.icon} size={14} color={isConnected ? (icons.bg === '#fff' ? colors.primary : icons.bg) : colors.onSurfaceVariant} />
+                <Text style={[styles.mcpChipText, { color: isConnected ? colors.onSurface : colors.onSurfaceVariant }]}>
+                  {app.provider_display_name || app.provider}
+                </Text>
+              </View>
+            );
+          })}
+        </ScrollView>
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -170,10 +187,15 @@ function AppCard({ app, onPress, buttonLabel, buttonStyle }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 50 },
+  header: { paddingTop: 50, borderBottomWidth: 1, borderBottomColor: colors.outlineVariant + '15' },
+  headerTop: { flexDirection: 'row', alignItems: 'center' },
   headerTitle: { fontSize: 18, fontWeight: '700', color: colors.onSurface },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
-  section: { marginBottom: 24 },
+  mcpStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, gap: 12 },
+  mcpChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: colors.surfaceContainerLow, borderRadius: 20, borderWidth: 1, borderColor: colors.outlineVariant + '10' },
+  mcpDot: { width: 6, height: 6, borderRadius: 3 },
+  mcpChipText: { fontSize: 11, fontWeight: '700' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
+  section: { marginBottom: 24, marginTop: 12 },
   sectionTitle: {
     fontSize: 10, fontWeight: '700', color: colors.primary, letterSpacing: 1.5, marginBottom: 12,
   },
