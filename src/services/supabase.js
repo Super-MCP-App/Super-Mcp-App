@@ -30,11 +30,16 @@ export async function signIn(email, password) {
   return data;
 }
 
+import * as Linking from 'expo-linking';
+
 export async function signInWithGoogle() {
+  const redirectUrl = Linking.createURL('google-auth');
+  console.log('Redirecting to:', redirectUrl);
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'mcpapp://google-auth',
+      redirectTo: redirectUrl,
       skipBrowserRedirect: false,
     },
   });
