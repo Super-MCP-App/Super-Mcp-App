@@ -43,6 +43,44 @@
 
 ---
 
+## 🏗️ System Architecture
+
+The project follows a modern, decoupled architecture ensuring scale and security by preventing mobile clients from ever having direct access to DB keys or AI API keys.
+
+```mermaid
+graph TD
+    %% Frontend Layer
+    subgraph Mobile_Client ["📱 Mobile App (React Native/Expo)"]
+        UI["React Native Paper UI"]
+        Gestures["Gesture Handler"]
+        MD["Markdown Renderer"]
+        State["State & API Service Layer"]
+    end
+
+    %% Backend Layer
+    subgraph API_Gateway ["⚙️ Next.js Serverless API"]
+        AuthAPI["/api/auth/*"]
+        ChatAPI["/api/conversations/*"]
+        MessageAPI["/api/messages/*"]
+    end
+
+    %% External Services Layer
+    subgraph External_Services ["🌐 Cloud Services"]
+        SupaDB[("Supabase (PostgreSQL)")]
+        SupaAuth{"Supabase Auth"}
+        Nvidia(("NVIDIA NIM (LLaMA 3.1)"))
+    end
+
+    %% Connections
+    State <--> |"REST (JSON)"| API_Gateway
+    AuthAPI <--> |"User Auth Rules"| SupaAuth
+    ChatAPI <--> |"CRUD Operations"| SupaDB
+    MessageAPI <--> |"Row-Level Security"| SupaDB
+    MessageAPI <--> |"Prompting / Responses"| Nvidia
+```
+
+---
+
 ## 🚀 Getting Started
 
 Follow these steps to get the app running locally on your machine and simulator.
