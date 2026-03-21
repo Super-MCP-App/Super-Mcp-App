@@ -1,0 +1,25 @@
+# Render Blueprint for Super-MCP-App Backend
+services:
+  - type: web
+    name: mcp-backend
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    rootDir: backend
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        value: https://wkffqedsboeenmmfwkfq.supabase.co
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        value: sb_publishable_oNmEOymvuM5qoUsL9Z2RXA_WDfqoBq2
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NEXT_PUBLIC_API_URL
+        value: https://mcp-backend.onrender.com
+      - key: NODE_ENV
+        value: production

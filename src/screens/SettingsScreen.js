@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Pressable } from 'react-native';
-import { Text, IconButton, Switch, TextInput } from 'react-native-paper';
+import { Text, IconButton, Switch, TextInput, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { signOut } from '../services/supabase';
+import { signOut, supabase } from '../services/supabase';
 
 export default function SettingsScreen({ navigation }) {
   const [darkMode, setDarkMode] = useState(false);

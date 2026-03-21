@@ -23,21 +23,39 @@ create table if not exists public.profiles (
 );
 
 -- Function to check if current user is admin without recursion
+-- Using security definer and explicit search path is the standard way to break recursion in Supabase
 create or replace function public.is_admin()
-returns boolean as $$
+returns boolean 
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
+  -- This query is executed with postgres privileges (bypassing RLS)
+  -- because of 'security definer' as long as it's called correctly.
   return exists (
     select 1 from public.profiles
     where id = auth.uid()
     and role = 'admin'
   );
 end;
-$$ language plpgsql security definer;
+$$;
 
 alter table public.profiles enable row level security;
-create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
-create policy "Admins can view all profiles" on public.profiles for select using (public.is_admin());
+
+-- Drop existing policies if they exist to avoid duplicates
+drop policy if exists "Users can view own profile" on public.profiles;
+drop policy if exists "Users can update own profile" on public.profiles;
+drop policy if exists "Admins can view all profiles" on public.profiles;
+
+create policy "Users can view own profile" on public.profiles 
+  for select using (auth.uid() = id);
+
+create policy "Users can update own profile" on public.profiles 
+  for update using (auth.uid() = id);
+
+create policy "Admins can view all profiles" on public.profiles 
+  for select using (public.is_admin());
 
 -- ==========================================
 -- CONVERSATIONS

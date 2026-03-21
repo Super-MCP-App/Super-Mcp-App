@@ -1,7 +1,7 @@
 import { getSession, signOut } from './supabase';
 import { Platform } from 'react-native';
 
-const API_BASE = 'https://smart-mcp.vercel.app/api';
+const API_BASE = 'https://mcp-app-tau.vercel.app/api';
 
 // Core fetch wrapper with auth
 async function apiFetch(endpoint, options = {}) {
