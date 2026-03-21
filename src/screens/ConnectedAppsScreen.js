@@ -14,6 +14,11 @@ const providerIcons = {
   canva: { icon: 'brush', color: '#fff', bg: '#7d2ae8' },
   google_drive: { icon: 'google-drive', color: '#fff', bg: '#4285f4' },
   notion: { icon: 'notebook', color: '#fff', bg: '#000' },
+  github: { icon: 'github', color: '#fff', bg: '#24292e' },
+  slack: { icon: 'slack', color: '#fff', bg: '#4A154B' },
+  discord: { icon: 'discord', color: '#fff', bg: '#5865F2' },
+  kite: { icon: 'chart-line', color: '#fff', bg: '#0084FF' },
+  custom: { icon: 'server-network', color: '#fff', bg: '#10B981' },
 };
 
 export default function ConnectedAppsScreen({ navigation }) {
