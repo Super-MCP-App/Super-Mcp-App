@@ -1,0 +1,8 @@
+# Ignore local build artifacts and large folders
+node_modules
+.next
+.vercel
+build_log.txt
+build_log_2.txt
+supabase-schema.sql
+next-env.d.ts

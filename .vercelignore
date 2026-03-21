@@ -1,5 +1,10 @@
 # Ignore React Native app files from Vercel's build scope
 node_modules
+.expo
+ios
+android
+dist
+web-build
 package-lock.json
 package.json
 src/
@@ -11,3 +16,5 @@ eas.json
 tsconfig.json
 .gitignore
 README.md
+smart-mcp.apk
+.vercel
