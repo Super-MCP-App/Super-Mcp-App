@@ -45,38 +45,57 @@
 
 ## 🏗️ System Architecture
 
-The project follows a modern, decoupled architecture ensuring scale and security by preventing mobile clients from ever having direct access to DB keys or AI API keys.
+The project follows a modern, decoupled architecture powered by the **Model Context Protocol (MCP)**, connecting external tool providers securely to the AI model without exposing credentials to the mobile client.
 
 ```mermaid
 graph TD
     %% Frontend Layer
     subgraph Mobile_Client ["📱 Mobile App (React Native/Expo)"]
-        UI["React Native Paper UI"]
-        Gestures["Gesture Handler"]
-        MD["Markdown Renderer"]
-        State["State & API Service Layer"]
+        UI["React Native UI"]
+        State["State & API Layers"]
     end
 
-    %% Backend Layer
-    subgraph API_Gateway ["⚙️ Next.js Serverless API"]
-        AuthAPI["/api/auth/*"]
-        ChatAPI["/api/conversations/*"]
-        MessageAPI["/api/messages/*"]
+    %% Backend Layer (Next.js API)
+    subgraph API_Gateway ["⚙️ Next.js Serverless Backend"]
+        AuthAPI["/api/auth"]
+        ChatAPI["/api/conversations"]
+        
+        subgraph MCP_Architecture ["🔌 Model Context Protocol (MCP) Integration"]
+            MessageAPI["/api/messages"]
+            MCPClient["MCP Client Engine"]
+            Tools["Tool & Resource Registry"]
+        end
     end
 
-    %% External Services Layer
-    subgraph External_Services ["🌐 Cloud Services"]
+    %% External Infrastructure
+    subgraph External_Services ["🌐 Core Infrastructure & AI"]
         SupaDB[("Supabase (PostgreSQL)")]
         SupaAuth{"Supabase Auth"}
         Nvidia(("NVIDIA NIM (LLaMA 3.1)"))
     end
 
-    %% Connections
-    State <--> |"REST (JSON)"| API_Gateway
-    AuthAPI <--> |"User Auth Rules"| SupaAuth
-    ChatAPI <--> |"CRUD Operations"| SupaDB
-    MessageAPI <--> |"Row-Level Security"| SupaDB
-    MessageAPI <--> |"Prompting / Responses"| Nvidia
+    %% MCP Providers Layer
+    subgraph MCP_Providers ["🛠️ MCP Servers (Providers)"]
+        FigmaMCP["Figma MCP Server"]
+        CanvaMCP["Canva MCP Server"]
+        CustomMCP["Custom External Data MCPs"]
+    end
+
+    %% Mobile to API Routing
+    State <--> |"REST"| AuthAPI
+    State <--> |"REST"| ChatAPI
+    State <--> |"REST"| MessageAPI
+
+    %% Backend to Infra Routing
+    AuthAPI <--> |"Authentication"| SupaAuth
+    ChatAPI <--> |"Storage & Retrieval"| SupaDB
+    MessageAPI <--> |"RLS Authenticated Reads"| SupaDB
+    
+    %% The MCP Flow Model
+    MessageAPI --> MCPClient
+    MCP_Providers <--> |"Standardized Tool/Resource Context (MCP)"| MCPClient
+    MCPClient --> Tools
+    Tools <--> |"Injected Tools & Function Calls"| Nvidia
 ```
 
 ---
