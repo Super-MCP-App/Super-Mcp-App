@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./assets/logo.png" width="300" alt="Super-MCP-App Logo" />
   <h1>✨ Super-MCP-App ✨</h1>
   <p><b>Your Intelligent, Native Mobile AI Assistant</b></p>
   
