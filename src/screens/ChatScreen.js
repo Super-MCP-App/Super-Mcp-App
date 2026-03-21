@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, TextInput as RNTextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Modal, FlatList } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, TouchableOpacity, TextInput as RNTextInput, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Modal, Image } from 'react-native';
+import { Text, IconButton, Switch } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme/colors';
 import { conversationsApi, messagesApi } from '../services/api';
 
@@ -15,6 +17,8 @@ export default function ChatScreen({ route, navigation }) {
   const [menuVisible, setMenuVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [useMcp, setUseMcp] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
   const scrollRef = useRef();
 
   useEffect(() => {
@@ -26,7 +30,12 @@ export default function ChatScreen({ route, navigation }) {
       const conv = await conversationsApi.get(conversationId);
       const msgs = conv?.messages || conv || [];
       const remoteMsgs = Array.isArray(msgs) ? msgs.filter(m => m.role !== 'system') : [];
-      setMessages(prev => (prev.length > 0 ? prev : remoteMsgs));
+      
+      setMessages(prev => {
+        const existingIds = new Set(remoteMsgs.map(m => m.id));
+        const optimisticMsgs = prev.filter(m => !existingIds.has(m.id) && m.id > 1000000000000);
+        return [...remoteMsgs, ...optimisticMsgs];
+      });
     } catch (e) {
       console.log('Load messages error:', e.message);
     } finally {
@@ -34,17 +43,38 @@ export default function ChatScreen({ route, navigation }) {
     }
   };
 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.5,
+      base64: true,
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if ((!text && !selectedImage) || sending) return;
 
-    const userMsg = { id: Date.now(), role: 'user', content: text, created_at: new Date().toISOString() };
+    const userMsg = { 
+      id: Date.now(), 
+      role: 'user', 
+      content: text, 
+      imageUri: selectedImage?.uri,
+      created_at: new Date().toISOString() 
+    };
+    
     setMessages(prev => [...prev, userMsg]);
     setInput('');
+    const base64Image = selectedImage?.base64;
+    setSelectedImage(null);
     setSending(true);
 
     try {
-      const response = await messagesApi.send(conversationId, text);
+      const response = await messagesApi.send(conversationId, text, useMcp, base64Image);
       const aiMsg = response?.aiMessage || response?.ai_message || response;
       if (aiMsg && aiMsg.content) {
         setMessages(prev => [...prev, { id: aiMsg.id || Date.now() + 1, role: 'assistant', content: aiMsg.content, created_at: new Date().toISOString() }]);
@@ -61,7 +91,8 @@ export default function ChatScreen({ route, navigation }) {
     setMenuVisible(false);
     try {
       setLoading(true);
-      const newConv = await conversationsApi.create('New Chat');
+      const preferredModel = await AsyncStorage.getItem('preferred_model');
+      const newConv = await conversationsApi.create('New Chat', preferredModel || undefined);
       navigation.replace('ChatDetail', { conversationId: newConv.id, title: newConv.title });
     } catch (e) {
       Alert.alert('Error', 'Could not create new chat');
@@ -105,7 +136,10 @@ export default function ChatScreen({ route, navigation }) {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>{title || 'Chat'}</Text>
-          <Text style={styles.headerSub}>⚡ LLaMA 3.1 8B</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1, gap: 4 }}>
+             <MaterialCommunityIcons name={useMcp ? "lightning-bolt" : "lightning-bolt-outline"} size={10} color={useMcp ? colors.primary : colors.onSurfaceVariant} />
+             <Text style={[styles.headerSub, !useMcp && { color: colors.onSurfaceVariant }]}>{useMcp ? 'MCP Active' : 'MCP Disabled'}</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={handleNewChat} style={styles.menuBtn}>
           <MaterialCommunityIcons name="message-plus-outline" size={22} color={colors.primary} />
@@ -137,6 +171,14 @@ export default function ChatScreen({ route, navigation }) {
       <Modal transparent visible={menuVisible} animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setMenuVisible(false)}>
           <View style={styles.menuDropdown}>
+            <View style={[styles.menuItem, { justifyContent: 'space-between' }]}>
+               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                 <MaterialCommunityIcons name="auto-fix" size={18} color={useMcp ? colors.primary : colors.onSurface} />
+                 <Text style={styles.menuItemText}>MCP Tools</Text>
+               </View>
+               <Switch value={useMcp} onValueChange={setUseMcp} color={colors.primary} style={{ transform: [{ scale: 0.8 }] }} />
+            </View>
+            <View style={styles.menuDivider} />
             <TouchableOpacity style={styles.menuItem} onPress={handleSearchToggle}>
               <MaterialCommunityIcons name="magnify" size={18} color={colors.onSurface} />
               <Text style={styles.menuItemText}>Search Chat</Text>
@@ -178,7 +220,12 @@ export default function ChatScreen({ route, navigation }) {
                 )}
                 <View style={[styles.bubbleContent, msg.role === 'user' ? styles.userBubbleContent : styles.aiBubbleContent]}>
                   {msg.role === 'user' ? (
-                    <Text style={[styles.bubbleText, styles.userBubbleText]}>{msg.content}</Text>
+                    <View>
+                      {msg.imageUri && (
+                        <Image source={{ uri: msg.imageUri }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: 8 }} />
+                      )}
+                      {msg.content ? <Text style={[styles.bubbleText, styles.userBubbleText]}>{msg.content}</Text> : null}
+                    </View>
                   ) : (
                     <View>
                       <Markdown style={markdownStyles}>
@@ -212,27 +259,40 @@ export default function ChatScreen({ route, navigation }) {
         </ScrollView>
       )}
 
-      {/* Input Bar */}
-      <View style={styles.inputContainer}>
-        <RNTextInput
-          style={styles.textInput}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Message AI..."
-          placeholderTextColor={colors.onSurfaceVariant}
-          multiline
-          returnKeyType="default"
-          color={colors.onSurface}
-          onSubmitEditing={handleSend}
-          blurOnSubmit={false}
-        />
-        <TouchableOpacity
-          style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.surfaceContainerLow }]}
-          onPress={handleSend}
-          disabled={!input.trim() || sending}
-        >
-          <MaterialCommunityIcons name="send" size={20} color={input.trim() ? colors.onPrimary : colors.outlineVariant} />
-        </TouchableOpacity>
+      {/* Image Preview & Input Bar */}
+      <View style={{ backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 24 : 8, borderTopWidth: 1, borderTopColor: colors.outlineVariant + '15' }}>
+        {selectedImage && (
+          <View style={styles.imagePreviewContainer}>
+            <Image source={{ uri: selectedImage.uri }} style={styles.imagePreview} />
+            <TouchableOpacity style={styles.imagePreviewRemove} onPress={() => setSelectedImage(null)}>
+              <MaterialCommunityIcons name="close-circle" size={24} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.inputContainer}>
+          <TouchableOpacity onPress={pickImage} style={styles.paperclipBtn}>
+            <MaterialCommunityIcons name="paperclip" size={24} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+          <RNTextInput
+            style={styles.textInput}
+            value={input}
+            onChangeText={setInput}
+            placeholder={selectedImage ? "Add a caption..." : "Message AI..."}
+            placeholderTextColor={colors.onSurfaceVariant}
+            multiline
+            returnKeyType="default"
+            color={colors.onSurface}
+            onSubmitEditing={handleSend}
+            blurOnSubmit={false}
+          />
+          <TouchableOpacity
+            style={[styles.sendBtn, { backgroundColor: (input.trim() || selectedImage) ? colors.primary : colors.surfaceContainerLow }]}
+            onPress={handleSend}
+            disabled={(!input.trim() && !selectedImage) || sending}
+          >
+            <MaterialCommunityIcons name="send" size={20} color={(input.trim() || selectedImage) ? colors.onPrimary : colors.outlineVariant} />
+          </TouchableOpacity>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -293,9 +353,13 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14, lineHeight: 20, color: colors.onSurface },
   userBubbleText: { color: colors.onPrimary },
   typingDots: { color: colors.primary, fontSize: 16, letterSpacing: 2 },
-  inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.outlineVariant + '15', backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 24 : 8 },
+  imagePreviewContainer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, flexDirection: 'row' },
+  imagePreview: { width: 70, height: 70, borderRadius: 12, borderWidth: 1, borderColor: colors.outlineVariant + '30' },
+  imagePreviewRemove: { position: 'absolute', top: 4, left: 74, backgroundColor: '#fff', borderRadius: 12 },
+  inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 12, paddingVertical: 8 },
+  paperclipBtn: { padding: 10, marginRight: 2 },
   textInput: { flex: 1, backgroundColor: colors.surfaceContainerLow, borderRadius: 24, paddingHorizontal: 18, paddingVertical: 10, fontSize: 14, color: colors.onSurface, maxHeight: 100, marginRight: 8 },
-  sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: 2 },
   connectFigmaBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: '#F24E1E', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, alignSelf: 'flex-start', gap: 6 },
   connectFigmaText: { color: colors.white, fontWeight: '700', fontSize: 13 },
 });

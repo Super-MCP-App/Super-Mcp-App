@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Pressable } from 'react-native';
 import { Text, IconButton, Switch, TextInput, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme/colors';
 import { signOut, supabase } from '../services/supabase';
 
@@ -9,13 +10,15 @@ export default function SettingsScreen({ navigation }) {
   const [darkMode, setDarkMode] = useState(false);
   const [pushNotif, setPushNotif] = useState(true);
   const [emailNotif, setEmailNotif] = useState(true);
-
-  const mcpProviders = [
-    { id: 'figma', name: 'Figma', icon: 'vector-bezier', desc: 'Read design files and components', color: '#F24E1E' },
-    { id: 'canva', name: 'Canva', icon: 'palette-outline', desc: 'Access and export Canva designs', color: '#00C4CC' },
-    { id: 'kite', name: 'Kite', icon: 'chart-line', desc: 'Secure financial data access', color: colors.primary },
+  
+  const models = [
+    { id: 'nvidia/llama-3.1-nemotron-ultra-253b-v1', name: 'NVIDIA Nemotron Ultra 253B' },
+    { id: 'meta/llama-3.2-90b-vision-instruct', name: 'Meta Llama 3.2 90B Vision' },
+    { id: 'mistralai/mixtral-8x22b-instruct-v0.1', name: 'Mixtral 8x22B Instruct' },
+    { id: 'google/gemma-2-27b-it', name: 'Google Gemma 2 27B' },
   ];
-  const [mcpConnected, setMcpConnected] = useState({});
+  const [selectedModel, setSelectedModel] = useState(models[0].id);
+
   const [apiKey, setApiKey] = useState('');
   const [isSavingKey, setIsSavingKey] = useState(false);
 
@@ -29,13 +32,11 @@ export default function SettingsScreen({ navigation }) {
 
     // Load API Key safely
     const { data: profile } = await supabase.from('profiles').select('nvidia_api_key').eq('id', user.id).single();
-    if (profile?.nvidia_api_key) setApiKey('•••••••••••••••••••••••••'); // Mask immediately
+    if (profile?.nvidia_api_key) setApiKey('•••••••••••••••••••••••••');
 
-    // Load MCP Connections
-    const { data: apps } = await supabase.from('connected_apps').select('provider').eq('user_id', user.id);
-    const connMap = {};
-    (apps || []).forEach(a => { connMap[a.provider] = true; });
-    setMcpConnected(connMap);
+    // Load preferred model locally
+    const savedModel = await AsyncStorage.getItem('preferred_model');
+    if (savedModel) setSelectedModel(savedModel);
   };
 
   const saveApiKey = async (newKey) => {
@@ -53,27 +54,13 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const handleMcpToggle = (id) => {
-    const isConnected = mcpConnected[id];
-    Alert.alert(
-      isConnected ? 'Disconnect' : 'Connect',
-      isConnected ? `Disconnect ${id} MCP server?` : `Connect to ${id} MCP server?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: isConnected ? 'Disconnect' : 'Connect', onPress: async () => {
-           const { data: { user } } = await supabase.auth.getUser();
-           if (isConnected) {
-             await supabase.from('connected_apps').delete().eq('user_id', user.id).eq('provider', id);
-             setMcpConnected(prev => ({ ...prev, [id]: false }));
-           } else {
-             await supabase.from('connected_apps').upsert({
-               user_id: user.id, provider: id, status: 'connected', access_token: `mock_token_${Date.now()}`
-             }, { onConflict: 'user_id, provider' });
-             setMcpConnected(prev => ({ ...prev, [id]: true }));
-           }
-        } },
-      ]
-    );
+  const saveModelPreference = async (modelId) => {
+    setSelectedModel(modelId);
+    try {
+      await AsyncStorage.setItem('preferred_model', modelId);
+    } catch(e) {
+      console.log('Failed to save preferred model:', e.message);
+    }
   };
 
   const sections = [
@@ -128,9 +115,30 @@ export default function SettingsScreen({ navigation }) {
     },
     {
       title: 'AI MODEL',
-      items: [
-        { label: 'Default Model', icon: 'robot-outline', desc: 'NVIDIA Nemotron Ultra 253B', nav: false },
-      ],
+      custom: () => (
+        <View style={styles.group}>
+          {models.map((mdl, i) => (
+            <TouchableOpacity 
+              key={mdl.id} 
+              style={[styles.row, i < models.length - 1 && styles.rowBorder]}
+              onPress={() => saveModelPreference(mdl.id)}
+            >
+              <View style={styles.rowLeft}>
+                <View style={[styles.iconBg, { backgroundColor: selectedModel === mdl.id ? colors.primaryContainer : colors.surfaceContainer }]}>
+                  <MaterialCommunityIcons name={selectedModel === mdl.id ? "robot" : "robot-outline"} size={20} color={selectedModel === mdl.id ? colors.primary : colors.onSurfaceVariant} />
+                </View>
+                <View>
+                  <Text style={[styles.rowLabel, selectedModel === mdl.id && { color: colors.primary }]}>{mdl.name}</Text>
+                  <Text style={styles.rowDesc}>{selectedModel === mdl.id ? 'Active Provider' : 'Free Tier LLM'}</Text>
+                </View>
+              </View>
+              {selectedModel === mdl.id && (
+                <MaterialCommunityIcons name="check-circle" size={22} color={colors.primary} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      ),
     },
     {
       title: 'DATA',
@@ -191,32 +199,6 @@ export default function SettingsScreen({ navigation }) {
           </View>
         ))}
 
-        {/* MCP Connections Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>MCP CONNECTIONS</Text>
-          <View style={styles.group}>
-            {mcpProviders.map((p, i) => (
-              <View key={p.id} style={[styles.row, i < mcpProviders.length - 1 && styles.rowBorder]}>
-                <View style={styles.rowLeft}>
-                  <View style={[styles.iconBg, { backgroundColor: p.color + '20' }]}>
-                    <MaterialCommunityIcons name={p.icon} size={20} color={p.color} />
-                  </View>
-                  <View>
-                    <Text style={styles.rowLabel}>{p.name}</Text>
-                    <Text style={styles.rowDesc}>{p.desc}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={[styles.mcpBtn, { backgroundColor: mcpConnected[p.id] ? '#D1FAE5' : colors.surfaceContainerLow }]}
-                  onPress={() => handleMcpToggle(p.id)}
-                >
-                  <MaterialCommunityIcons name={mcpConnected[p.id] ? 'check-circle' : 'link-plus'} size={14} color={mcpConnected[p.id] ? '#059669' : colors.primary} />
-                  <Text style={[styles.mcpBtnText, { color: mcpConnected[p.id] ? '#059669' : colors.primary }]}>{mcpConnected[p.id] ? 'Connected' : 'Connect'}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        </View>
 
         <TouchableOpacity
           style={styles.logoutBtn}

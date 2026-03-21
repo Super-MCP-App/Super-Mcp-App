@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, 
 import { Text, Searchbar, FAB } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Swipeable } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../theme/colors';
 import { conversationsApi } from '../services/api';
 
@@ -43,7 +44,8 @@ export default function ConversationsScreen({ navigation }) {
 
   const handleNew = async () => {
     try {
-      const conv = await conversationsApi.create('New Conversation');
+      const preferredModel = await AsyncStorage.getItem('preferred_model');
+      const conv = await conversationsApi.create('New Conversation', preferredModel || undefined);
       if (conv?.id) {
         navigation.navigate('ChatDetail', { conversationId: conv.id, title: conv.title });
       }

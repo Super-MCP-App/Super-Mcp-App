@@ -38,7 +38,7 @@ const Tab = createBottomTabNavigator();
 const tabConfig = [
   { name: 'Home', icon: 'home', iconOutline: 'home-outline', component: HomeScreen },
   { name: 'Chat', icon: 'chat', iconOutline: 'chat-outline', component: ConversationsScreen },
-  { name: 'Apps', icon: 'view-grid', iconOutline: 'view-grid-outline', component: UsageScreen },
+  { name: 'Apps', icon: 'view-grid-plus', iconOutline: 'view-grid-plus-outline', component: ConnectedAppsScreen },
   { name: 'Tasks', icon: 'clipboard-check', iconOutline: 'clipboard-check-outline', component: TasksScreen },
   { name: 'Profile', icon: 'account', iconOutline: 'account-outline', component: ProfileScreen },
 ];

@@ -7,10 +7,10 @@ export async function POST(request) {
   const auth = await getAuthenticatedClient(request);
   if (auth.error) return auth.error;
 
-  const { conversation_id, content } = await request.json();
+  const { conversation_id, content, useMcp = true, image = null } = await request.json();
 
-  if (!conversation_id || !content) {
-    return errorResponse('conversation_id and content are required', 400);
+  if (!conversation_id && !content && !image) {
+    return errorResponse('conversation_id and content or image are required', 400);
   }
 
   // Verify conversation belongs to user
@@ -50,13 +50,13 @@ export async function POST(request) {
     return acc;
   }, {});
 
-  const availableTools = getAvailableTools(connectionsMap);
+  const availableTools = useMcp ? getAvailableTools(connectionsMap) : [];
 
-  // Save user message
+  // Save user message (append [Image Attachment] if no text but image exists)
   await auth.supabase.from('messages').insert({
     conversation_id,
     role: 'user',
-    content,
+    content: content || '[Image Attachment]',
   });
 
   // Fetch conversation history for context
@@ -71,7 +71,12 @@ export async function POST(request) {
   const history = (rawHistory || []).filter(msg => msg.role !== 'system');
 
   // Map deprecated model from database to undefined to ensure it falls back to the default working model
-  const activeModel = conv.model === 'nvidia/llama-3.1-nemotron-ultra-253b-v1' ? undefined : conv.model;
+  let activeModel = conv.model === 'nvidia/llama-3.1-nemotron-ultra-253b-v1' ? undefined : conv.model;
+  
+  // Force a vision model if an image is provided
+  if (image) {
+    activeModel = 'meta/llama-3.2-90b-vision-instruct';
+  }
 
   // Build the message payload
   const messagesPayload = [];
@@ -92,12 +97,24 @@ INTELLIGENT BEHAVIOR & INTEGRATIONS
   if (history && history.length > 0) {
     messagesPayload.push(...history);
   }
-  messagesPayload.push({ role: 'user', content });
+
+  // Format the current user message (Image formatting if applicable)
+  if (image) {
+    messagesPayload.push({
+      role: 'user',
+      content: [
+        { type: "text", text: content || 'Analyze this image.' },
+        { type: "image_url", image_url: { url: `data:image/jpeg;base64,${image}` } }
+      ]
+    });
+  } else {
+    messagesPayload.push({ role: 'user', content });
+  }
 
   // Call NVIDIA AI with BYOK and connected tools
   let aiResponse = await chatCompletion(profile.nvidia_api_key, messagesPayload, {
     model: activeModel,
-    tools: availableTools,
+    tools: availableTools?.length > 0 ? availableTools : undefined, // Must pass undefined if empty for some LLMs
   });
 
   // Handle LLM Tool Calling Loop

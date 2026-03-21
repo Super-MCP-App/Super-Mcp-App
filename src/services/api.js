@@ -45,14 +45,14 @@ export const authApi = {
 export const conversationsApi = {
   list: () => apiFetch('/conversations'),
   get: (id) => apiFetch(`/conversations/${id}`),
-  create: (title) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ title }) }),
+  create: (title, model) => apiFetch('/conversations', { method: 'POST', body: JSON.stringify({ title, model }) }),
   delete: (id) => apiFetch(`/conversations/${id}`, { method: 'DELETE' }),
 };
 
 // ============ Messages ============
 export const messagesApi = {
-  send: (conversation_id, content) =>
-    apiFetch('/messages', { method: 'POST', body: JSON.stringify({ conversation_id, content }) }),
+  send: (conversation_id, content, useMcp = true, imageBase64 = null) =>
+    apiFetch('/messages', { method: 'POST', body: JSON.stringify({ conversation_id, content, useMcp, image: imageBase64 }) }),
 };
 
 // ============ Tasks ============

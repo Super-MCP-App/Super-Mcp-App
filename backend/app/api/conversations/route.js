@@ -28,6 +28,7 @@ export async function POST(request) {
     .insert({
       user_id: auth.user.id,
       title: body.title || 'New Conversation',
+      model: body.model || 'nvidia/llama-3.1-nemotron-ultra-253b-v1',
     })
     .select()
     .single();
