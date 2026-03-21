@@ -154,13 +154,6 @@ export default function ConnectedAppsScreen({ navigation }) {
           </View>
         )}
 
-        {apps.length === 0 && !loading && (
-          <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="link-variant" size={48} color={colors.outlineVariant} />
-            <Text style={styles.emptyTitle}>No MCP providers</Text>
-            <Text style={styles.emptySubtitle}>Run /api/setup to seed providers</Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
