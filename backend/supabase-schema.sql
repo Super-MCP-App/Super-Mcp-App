@@ -16,6 +16,8 @@ create table if not exists public.profiles (
   phone text,
   plan text default 'free' check (plan in ('free', 'pro', 'enterprise')),
   role text default 'user' check (role in ('user', 'admin')),
+  nvidia_api_key text,
+  is_onboarded boolean default false,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -111,7 +113,7 @@ create index idx_notifications_user on public.notifications(user_id);
 create table if not exists public.connected_apps (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references auth.users on delete cascade not null,
-  provider text not null check (provider in ('figma', 'canva', 'google_drive', 'slack', 'notion', 'discord', 'github')),
+  provider text not null check (provider in ('figma', 'canva', 'kite', 'custom', 'google_drive', 'slack', 'notion', 'discord', 'github')),
   access_token text,
   refresh_token text,
   token_expiry timestamptz,

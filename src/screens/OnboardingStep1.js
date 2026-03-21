@@ -54,13 +54,7 @@ export default function OnboardingStep1({ navigation }) {
         >
           Continue
         </Button>
-        <Button
-          mode="text"
-          onPress={() => navigation.navigate('MainTabs')}
-          labelStyle={styles.skipLabel}
-        >
-          Skip for now
-        </Button>
+
       </View>
     </View>
   );

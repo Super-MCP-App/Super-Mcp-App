@@ -35,13 +35,12 @@ export default function TasksScreen({ navigation }) {
   }, [navigation]);
 
   const handleAddTask = async () => {
-    if (!newTitle.trim()) { Alert.alert('Error', 'Task title is required'); return; }
+    if (!newTitle.trim()) { Alert.alert('Error', 'Task prompt is required'); return; }
     setAdding(true);
     try {
-      const task = await tasksApi.create(newTitle.trim(), newDesc.trim());
+      const task = await tasksApi.create(newTitle.trim());
       setTasks(prev => [task, ...prev]);
       setNewTitle('');
-      setNewDesc('');
       setShowAddModal(false);
     } catch (e) {
       Alert.alert('Error', e.message || 'Could not create task');
@@ -172,34 +171,25 @@ export default function TasksScreen({ navigation }) {
           <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setShowAddModal(false)} />
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>New Task</Text>
-            <Text style={styles.modalLabel}>Title *</Text>
+            <Text style={styles.modalTitle}>New AI Task</Text>
+            <Text style={styles.modalLabel}>AI Prompt *</Text>
             <TextInput
-              style={styles.modalInput}
-              placeholder="What needs to be done?"
+              style={[styles.modalInput, styles.modalTextarea]}
+              placeholder="e.g., Read my latest Figma file and break down the login screen into a checklist"
               placeholderTextColor={colors.onSurfaceVariant}
               value={newTitle}
               onChangeText={setNewTitle}
               autoFocus
-              returnKeyType="next"
-            />
-            <Text style={styles.modalLabel}>Description</Text>
-            <TextInput
-              style={[styles.modalInput, styles.modalTextarea]}
-              placeholder="Optional details..."
-              placeholderTextColor={colors.onSurfaceVariant}
-              value={newDesc}
-              onChangeText={setNewDesc}
               multiline
-              numberOfLines={3}
-              returnKeyType="done"
+              numberOfLines={4}
+              returnKeyType="default"
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowAddModal(false); setNewTitle(''); setNewDesc(''); }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setShowAddModal(false); setNewTitle(''); }}>
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.createBtn, adding && { opacity: 0.6 }]} onPress={handleAddTask} disabled={adding}>
-                <Text style={styles.createBtnText}>{adding ? 'Creating...' : 'Create Task'}</Text>
+                <Text style={styles.createBtnText}>{adding ? 'Generating...' : 'Generate Task'}</Text>
               </TouchableOpacity>
             </View>
           </View>

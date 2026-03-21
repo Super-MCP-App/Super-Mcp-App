@@ -13,7 +13,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.atelierai.mcpapp"
+      "bundleIdentifier": "com.atelierai.mcpapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.atelierai.mcpapp",
@@ -29,6 +32,11 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ebe86250-db23-4062-a91e-be250392cbe9"
+      }
+    }
   }
 }

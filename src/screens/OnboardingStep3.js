@@ -1,9 +1,66 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Text, Button } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import { supabase } from '../services/supabase';
+
+const apps = [
+  { id: 'figma', name: 'Figma', icon: 'palette-outline', desc: 'Read design files & layers' },
+  { id: 'canva', name: 'Canva', icon: 'image-outline', desc: 'Generate & export visuals' },
+  { id: 'kite', name: 'Kite', icon: 'chart-line', desc: 'Secure financial data access' },
+];
 
 export default function OnboardingStep3({ navigation }) {
+  const [loading, setLoading] = useState(false);
+  const [connections, setConnections] = useState({});
+
+  const toggleApp = async (providerId) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const isConnected = connections[providerId];
+      if (isConnected) {
+        // Disconnect
+        await supabase.from('connected_apps').delete().eq('user_id', user.id).eq('provider', providerId);
+        setConnections(prev => ({ ...prev, [providerId]: false }));
+      } else {
+        // Connect (Mock auth token for now)
+        await supabase.from('connected_apps').upsert({
+          user_id: user.id,
+          provider: providerId,
+          status: 'connected',
+          access_token: `mock_token_${Date.now()}`
+        }, { onConflict: 'user_id, provider' });
+        setConnections(prev => ({ ...prev, [providerId]: true }));
+      }
+    } catch (error) {
+      Alert.alert('Connection failed', error.message);
+    }
+  };
+
+  const finalizeOnboarding = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_onboarded: true })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to complete setup');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.progressBar}>
@@ -11,55 +68,46 @@ export default function OnboardingStep3({ navigation }) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Choose your plan</Text>
+        <Text style={styles.step}>Step 3 of 3</Text>
+        <Text style={styles.title}>Connect MCP Tools</Text>
+        <Text style={styles.subtitle}>Supercharge your AI by granting it isolated, secure access to your external tools. You can change this later.</Text>
 
-        {/* Free Plan */}
-        <View style={styles.planCard}>
-          <Text style={styles.planName}>Free</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>$0</Text>
-            <Text style={styles.priceUnit}>/mo</Text>
-          </View>
-          <View style={styles.featureList}>
-            <Text style={styles.feature}>• 100 AI messages per day</Text>
-            <Text style={styles.feature}>• 2 connected apps</Text>
-            <Text style={styles.feature}>• Basic analytics</Text>
-          </View>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] })}
-            style={styles.freePlanButton}
-            labelStyle={styles.freePlanLabel}
-            contentStyle={styles.buttonContent}
-          >
-            Start Free
-          </Button>
+        <View style={styles.appsList}>
+          {apps.map((app) => {
+            const isConnected = connections[app.id];
+            return (
+              <View key={app.id} style={[styles.appCard, isConnected && styles.appCardActive]}>
+                <View style={[styles.iconCircle, isConnected && styles.iconCircleActive]}>
+                  <MaterialCommunityIcons name={app.icon} size={24} color={isConnected ? '#fff' : colors.primary} />
+                </View>
+                <View style={styles.appInfo}>
+                  <Text style={styles.appName}>{app.name}</Text>
+                  <Text style={styles.appDesc}>{app.desc}</Text>
+                </View>
+                <TouchableOpacity 
+                  style={[styles.connectBtn, isConnected && styles.disconnectBtn]} 
+                  onPress={() => toggleApp(app.id)}
+                >
+                  <Text style={[styles.connectBtnText, isConnected && styles.disconnectBtnText]}>
+                    {isConnected ? 'Disconnect' : 'Connect'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
 
-        {/* Pro Plan */}
-        <View style={styles.proCard}>
-          <View style={styles.popularBadge}>
-            <Text style={styles.popularText}>POPULAR</Text>
-          </View>
-          <Text style={styles.planName}>Pro</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.price}>$12</Text>
-            <Text style={styles.priceUnit}>/mo</Text>
-          </View>
-          <View style={styles.featureList}>
-            <Text style={styles.feature}>• Unlimited AI messages</Text>
-            <Text style={styles.feature}>• Unlimited apps</Text>
-            <Text style={styles.feature}>• Advanced analytics</Text>
-            <Text style={styles.feature}>• Priority support</Text>
-          </View>
+        <View style={styles.bottomActions}>
           <Button
             mode="contained"
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] })}
-            style={styles.proPlanButton}
-            labelStyle={styles.proPlanLabel}
+            onPress={finalizeOnboarding}
+            loading={loading}
+            disabled={loading}
+            style={styles.continueButton}
+            labelStyle={styles.continueLabel}
             contentStyle={styles.buttonContent}
           >
-            Start Pro Trial
+            Finish Setup
           </Button>
         </View>
       </ScrollView>
@@ -68,121 +116,27 @@ export default function OnboardingStep3({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    paddingHorizontal: 20,
-    paddingTop: 64,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 32,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.primary,
-    borderRadius: 2,
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.onSurface,
-    letterSpacing: -0.5,
-    marginBottom: 32,
-  },
-  planCard: {
-    padding: 24,
-    backgroundColor: colors.surfaceContainerLow,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant + '30',
-    marginBottom: 16,
-  },
-  proCard: {
-    padding: 24,
-    backgroundColor: colors.primaryContainer,
-    borderRadius: 16,
-    elevation: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    position: 'relative',
-    overflow: 'visible',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: -12,
-    right: 24,
-    backgroundColor: colors.tertiary,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  popularText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  planName: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.onSurface,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginTop: 8,
-  },
-  price: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.onSurface,
-  },
-  priceUnit: {
-    fontSize: 14,
-    color: colors.onSurfaceVariant,
-    marginLeft: 4,
-  },
-  featureList: {
-    marginTop: 16,
-    gap: 6,
-  },
-  feature: {
-    fontSize: 13,
-    color: colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  freePlanButton: {
-    borderRadius: 28,
-    borderColor: colors.primary,
-    borderWidth: 1.5,
-    marginTop: 24,
-  },
-  freePlanLabel: {
-    color: colors.primary,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  proPlanButton: {
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    elevation: 4,
-    marginTop: 24,
-  },
-  proPlanLabel: {
-    color: colors.onPrimary,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  buttonContent: {
-    height: 48,
-  },
+  container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 20, paddingTop: 64 },
+  progressBar: { height: 4, backgroundColor: colors.surfaceContainer, borderRadius: 2, overflow: 'hidden', marginBottom: 32 },
+  progressFill: { height: '100%', backgroundColor: colors.primary, borderRadius: 2 },
+  scrollContent: { paddingBottom: 40 },
+  step: { fontSize: 13, color: colors.primary, fontWeight: '600' },
+  title: { fontSize: 28, fontWeight: '800', color: colors.onSurface, letterSpacing: -0.5, marginTop: 4 },
+  subtitle: { fontSize: 14, color: colors.onSurfaceVariant, marginTop: 12, lineHeight: 22 },
+  appsList: { marginTop: 32, gap: 16 },
+  appCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceContainerLowest, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: colors.outlineVariant + '30', elevation: 1 },
+  appCardActive: { borderColor: colors.primary + '50', backgroundColor: colors.primaryContainer + '30' },
+  iconCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primaryContainer, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  iconCircleActive: { backgroundColor: colors.primary },
+  appInfo: { flex: 1 },
+  appName: { fontSize: 16, fontWeight: '700', color: colors.onSurface },
+  appDesc: { fontSize: 13, color: colors.onSurfaceVariant, marginTop: 2 },
+  connectBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.primaryContainer },
+  connectBtnText: { color: colors.onPrimaryContainer, fontSize: 13, fontWeight: '700' },
+  disconnectBtn: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.error + '50' },
+  disconnectBtnText: { color: colors.error },
+  bottomActions: { marginTop: 40 },
+  continueButton: { borderRadius: 28, backgroundColor: colors.primary, elevation: 4 },
+  continueLabel: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
+  buttonContent: { height: 52 },
 });

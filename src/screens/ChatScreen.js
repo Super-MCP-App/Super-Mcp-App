@@ -57,6 +57,18 @@ export default function ChatScreen({ route, navigation }) {
     }
   };
 
+  const handleNewChat = async () => {
+    setMenuVisible(false);
+    try {
+      setLoading(true);
+      const newConv = await conversationsApi.create('New Chat');
+      navigation.replace('ChatDetail', { conversationId: newConv.id, title: newConv.title });
+    } catch (e) {
+      Alert.alert('Error', 'Could not create new chat');
+      setLoading(false);
+    }
+  };
+
   const handleClearChat = () => {
     setMenuVisible(false);
     Alert.alert('Clear Chat', 'Remove all messages from this view?', [
@@ -95,6 +107,9 @@ export default function ChatScreen({ route, navigation }) {
           <Text style={styles.headerTitle} numberOfLines={1}>{title || 'Chat'}</Text>
           <Text style={styles.headerSub}>⚡ LLaMA 3.1 8B</Text>
         </View>
+        <TouchableOpacity onPress={handleNewChat} style={styles.menuBtn}>
+          <MaterialCommunityIcons name="message-plus-outline" size={22} color={colors.primary} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.menuBtn}>
           <MaterialCommunityIcons name="dots-vertical" size={22} color={colors.onSurface} />
         </TouchableOpacity>

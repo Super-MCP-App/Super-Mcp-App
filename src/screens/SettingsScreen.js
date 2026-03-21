@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, Pressable } from 'react-native';
-import { Text, IconButton, Switch } from 'react-native-paper';
+import { Text, IconButton, Switch, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { signOut } from '../services/supabase';
@@ -13,9 +13,45 @@ export default function SettingsScreen({ navigation }) {
   const mcpProviders = [
     { id: 'figma', name: 'Figma', icon: 'vector-bezier', desc: 'Read design files and components', color: '#F24E1E' },
     { id: 'canva', name: 'Canva', icon: 'palette-outline', desc: 'Access and export Canva designs', color: '#00C4CC' },
-    { id: 'custom', name: 'Custom MCP', icon: 'server-network', desc: 'Connect your own MCP server', color: colors.primary },
+    { id: 'kite', name: 'Kite', icon: 'chart-line', desc: 'Secure financial data access', color: colors.primary },
   ];
-  const [mcpConnected, setMcpConnected] = useState({ figma: false, canva: false, custom: false });
+  const [mcpConnected, setMcpConnected] = useState({});
+  const [apiKey, setApiKey] = useState('');
+  const [isSavingKey, setIsSavingKey] = useState(false);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Load API Key safely
+    const { data: profile } = await supabase.from('profiles').select('nvidia_api_key').eq('id', user.id).single();
+    if (profile?.nvidia_api_key) setApiKey('•••••••••••••••••••••••••'); // Mask immediately
+
+    // Load MCP Connections
+    const { data: apps } = await supabase.from('connected_apps').select('provider').eq('user_id', user.id);
+    const connMap = {};
+    (apps || []).forEach(a => { connMap[a.provider] = true; });
+    setMcpConnected(connMap);
+  };
+
+  const saveApiKey = async (newKey) => {
+    if (newKey === '•••••••••••••••••••••••••') return; // Do not save masked string
+    setIsSavingKey(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('profiles').update({ nvidia_api_key: newKey }).eq('id', user.id);
+      Alert.alert('Success', 'API Key updated successfully');
+      setApiKey('•••••••••••••••••••••••••');
+    } catch(e) {
+      Alert.alert('Error', 'Failed to update key');
+    } finally {
+      setIsSavingKey(false);
+    }
+  };
 
   const handleMcpToggle = (id) => {
     const isConnected = mcpConnected[id];
@@ -24,7 +60,18 @@ export default function SettingsScreen({ navigation }) {
       isConnected ? `Disconnect ${id} MCP server?` : `Connect to ${id} MCP server?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: isConnected ? 'Disconnect' : 'Connect', onPress: () => setMcpConnected(prev => ({ ...prev, [id]: !isConnected })) },
+        { text: isConnected ? 'Disconnect' : 'Connect', onPress: async () => {
+           const { data: { user } } = await supabase.auth.getUser();
+           if (isConnected) {
+             await supabase.from('connected_apps').delete().eq('user_id', user.id).eq('provider', id);
+             setMcpConnected(prev => ({ ...prev, [id]: false }));
+           } else {
+             await supabase.from('connected_apps').upsert({
+               user_id: user.id, provider: id, status: 'connected', access_token: `mock_token_${Date.now()}`
+             }, { onConflict: 'user_id, provider' });
+             setMcpConnected(prev => ({ ...prev, [id]: true }));
+           }
+        } },
       ]
     );
   };
@@ -42,6 +89,42 @@ export default function SettingsScreen({ navigation }) {
         { label: 'Push Notifications', icon: 'bell-ring-outline', desc: 'Receive push alerts', toggle: true, value: pushNotif, onToggle: setPushNotif },
         { label: 'Email Notifications', icon: 'email-outline', desc: 'Receive email updates', toggle: true, value: emailNotif, onToggle: setEmailNotif },
       ],
+    },
+    {
+      title: 'AI CONFIGURATION',
+      custom: () => (
+        <View style={styles.group}>
+          <View style={[styles.row, { flexDirection: 'column', alignItems: 'stretch', gap: 12 }]}>
+            <View style={styles.rowLeft}>
+              <View style={styles.iconBg}><MaterialCommunityIcons name="key-outline" size={20} color={colors.primary} /></View>
+              <View>
+                <Text style={styles.rowLabel}>NVIDIA API Key</Text>
+                <Text style={styles.rowDesc}>Your personal key for LLM access</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                value={apiKey}
+                onChangeText={setApiKey}
+                mode="outlined"
+                secureTextEntry={apiKey === '•••••••••••••••••••••••••'}
+                style={{ flex: 1, height: 40, backgroundColor: 'transparent' }}
+                placeholder="Enter new key"
+                outlineColor={colors.outlineVariant}
+                activeOutlineColor={colors.primary}
+              />
+              <Button 
+                mode="contained" 
+                onPress={() => saveApiKey(apiKey)} 
+                loading={isSavingKey}
+                disabled={isSavingKey || apiKey === '•••••••••••••••••••••••••' || !apiKey}
+              >
+                Save
+              </Button>
+            </View>
+          </View>
+        </View>
+      ),
     },
     {
       title: 'AI MODEL',
@@ -76,31 +159,35 @@ export default function SettingsScreen({ navigation }) {
         {sections.map((section, sIdx) => (
           <View key={sIdx} style={styles.section}>
             <Text style={styles.sectionLabel}>{section.title}</Text>
-            <View style={styles.group}>
-              {section.items.map((item, iIdx) => (
-                <TouchableOpacity
-                  key={iIdx}
-                  style={[styles.row, iIdx < section.items.length - 1 && styles.rowBorder]}
-                  onPress={item.action || (() => {})}
-                  activeOpacity={item.toggle ? 1 : 0.7}
-                >
-                  <View style={styles.rowLeft}>
-                    <View style={styles.iconBg}>
-                      <MaterialCommunityIcons name={item.icon} size={20} color={colors.primary} />
+            {section.custom ? (
+              section.custom()
+            ) : (
+              <View style={styles.group}>
+                {section.items.map((item, iIdx) => (
+                  <TouchableOpacity
+                    key={iIdx}
+                    style={[styles.row, iIdx < section.items.length - 1 && styles.rowBorder]}
+                    onPress={item.action || (() => {})}
+                    activeOpacity={item.toggle ? 1 : 0.7}
+                  >
+                    <View style={styles.rowLeft}>
+                      <View style={styles.iconBg}>
+                        <MaterialCommunityIcons name={item.icon} size={20} color={colors.primary} />
+                      </View>
+                      <View>
+                        <Text style={styles.rowLabel}>{item.label}</Text>
+                        <Text style={styles.rowDesc}>{item.desc}</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.rowLabel}>{item.label}</Text>
-                      <Text style={styles.rowDesc}>{item.desc}</Text>
-                    </View>
-                  </View>
-                  {item.toggle ? (
-                    <Switch value={item.value} onValueChange={item.onToggle} color={colors.primary} />
-                  ) : (
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={colors.outlineVariant} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
+                    {item.toggle ? (
+                      <Switch value={item.value} onValueChange={item.onToggle} color={colors.primary} />
+                    ) : (
+                      <MaterialCommunityIcons name="chevron-right" size={20} color={colors.outlineVariant} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         ))}
 

@@ -39,21 +39,46 @@ function MainApp() {
     checkAuth();
 
     // Listen for auth state changes (logout, token refresh, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         setSessionState('Welcome-' + Date.now());
-      } else if (event === 'SIGNED_IN') {
-        setSessionState('MainTabs-' + Date.now());
+      } else if (event === 'SIGNED_IN' && session) {
+        await evaluateSession(session);
       }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
 
+  const evaluateSession = async (session) => {
+    if (!session) {
+      setSessionState('Welcome-' + Date.now());
+      return;
+    }
+    
+    try {
+      // Check if user is onboarded
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_onboarded')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (profile && profile.is_onboarded) {
+        setSessionState('MainTabs-' + Date.now());
+      } else {
+        setSessionState('Onboarding1-' + Date.now());
+      }
+    } catch (e) {
+      console.error('Error fetching profile state:', e);
+      setSessionState('MainTabs-' + Date.now()); // Fallback
+    }
+  }
+
   const checkAuth = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      setSessionState(session ? 'MainTabs-init' : 'Welcome-init');
+      await evaluateSession(session);
     } catch (e) {
       setSessionState('Welcome-error');
     }

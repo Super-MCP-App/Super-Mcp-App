@@ -1,0 +1,13 @@
+# Ignore React Native app files from Vercel's build scope
+node_modules
+package-lock.json
+package.json
+src/
+assets/
+App.js
+index.js
+app.json
+eas.json
+tsconfig.json
+.gitignore
+README.md
