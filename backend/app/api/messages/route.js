@@ -60,18 +60,38 @@ export async function POST(request) {
   });
 
   // Fetch conversation history for context
-  const { data: history } = await auth.supabase
+  const { data: rawHistory } = await auth.supabase
     .from('messages')
     .select('role, content')
     .eq('conversation_id', conversation_id)
     .order('created_at', { ascending: true })
     .limit(20);
 
+  // Filter out any stored system messages so we can dynamically inject the master prompt
+  const history = (rawHistory || []).filter(msg => msg.role !== 'system');
+
   // Map deprecated model from database to undefined to ensure it falls back to the default working model
   const activeModel = conv.model === 'nvidia/llama-3.1-nemotron-ultra-253b-v1' ? undefined : conv.model;
 
   // Build the message payload
-  const messagesPayload = history || [];
+  const messagesPayload = [];
+  
+  // Dynamic Master System Prompt for MCP Integrations
+  messagesPayload.push({
+    role: 'system',
+    content: `You are Super Mcp, a helpful and intelligent assistant. Be concise and friendly.
+
+INTELLIGENT BEHAVIOR & INTEGRATIONS
+- Always detect user intent first.
+- If a user requests a tool action (e.g., "Show my Figma files", "Export login screen", "Analyze this design"), CALL THE TOOL immediately. Do not just explain how to do it.
+- If a Figma tool returns a "NOT_CONNECTED" error, respond EXACTLY with: "Please connect your Figma account first." and include the trigger phrase "open_connect_figma_screen" somewhere in your text.
+- Support UI/UX analysis: If the user uploads an image or shares a design, analyze it and suggest improvements proactively (spacing, colors, UX).
+- Limitations: If asked to *create* a complex design via API (e.g. figma_create_frame), explain that the direct API has limitations and offer to generate a design structure or JSON guide instead.`
+  });
+
+  if (history && history.length > 0) {
+    messagesPayload.push(...history);
+  }
   messagesPayload.push({ role: 'user', content });
 
   // Call NVIDIA AI with BYOK and connected tools

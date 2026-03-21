@@ -180,9 +180,20 @@ export default function ChatScreen({ route, navigation }) {
                   {msg.role === 'user' ? (
                     <Text style={[styles.bubbleText, styles.userBubbleText]}>{msg.content}</Text>
                   ) : (
-                    <Markdown style={markdownStyles}>
-                      {msg.content}
-                    </Markdown>
+                    <View>
+                      <Markdown style={markdownStyles}>
+                        {msg.content?.replace('open_connect_figma_screen', '')}
+                      </Markdown>
+                      {msg.content?.includes('open_connect_figma_screen') && (
+                        <TouchableOpacity 
+                          style={styles.connectFigmaBtn} 
+                          onPress={() => navigation.getParent()?.navigate('Profile', { openSettings: true })}
+                        >
+                          <MaterialCommunityIcons name="vector-bezier" size={16} color={colors.white} />
+                          <Text style={styles.connectFigmaText}>Connect Figma Account</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   )}
                 </View>
               </View>
@@ -285,4 +296,6 @@ const styles = StyleSheet.create({
   inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.outlineVariant + '15', backgroundColor: colors.background, paddingBottom: Platform.OS === 'ios' ? 24 : 8 },
   textInput: { flex: 1, backgroundColor: colors.surfaceContainerLow, borderRadius: 24, paddingHorizontal: 18, paddingVertical: 10, fontSize: 14, color: colors.onSurface, maxHeight: 100, marginRight: 8 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  connectFigmaBtn: { flexDirection: 'row', alignItems: 'center', marginTop: 12, backgroundColor: '#F24E1E', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, alignSelf: 'flex-start', gap: 6 },
+  connectFigmaText: { color: colors.white, fontWeight: '700', fontSize: 13 },
 });

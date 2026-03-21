@@ -34,12 +34,5 @@ export async function POST(request) {
 
   if (error) return errorResponse(error.message);
 
-  // Add system message
-  await auth.supabase.from('messages').insert({
-    conversation_id: data.id,
-    role: 'system',
-    content: 'You are Super Mcp, a helpful and intelligent assistant. Be friendly, concise, and creative.',
-  });
-
   return successResponse(data, 201);
 }

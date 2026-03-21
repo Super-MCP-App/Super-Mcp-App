@@ -74,3 +74,8 @@ export async function getFigmaComments(accessToken, fileKey) {
 export async function getFigmaTeamProjects(accessToken, teamId) {
   return figmaFetch(`/teams/${teamId}/projects`, accessToken);
 }
+
+export async function getFigmaStyles(accessToken, fileKey) {
+  const data = await figmaFetch(`/files/${fileKey}`, accessToken);
+  return data.styles || {};
+}
