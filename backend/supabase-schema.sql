@@ -22,12 +22,22 @@ create table if not exists public.profiles (
   updated_at timestamptz default now()
 );
 
+-- Function to check if current user is admin without recursion
+create or replace function public.is_admin()
+returns boolean as $$
+begin
+  return exists (
+    select 1 from public.profiles
+    where id = auth.uid()
+    and role = 'admin'
+  );
+end;
+$$ language plpgsql security definer;
+
 alter table public.profiles enable row level security;
 create policy "Users can view own profile" on public.profiles for select using (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id);
-create policy "Admins can view all profiles" on public.profiles for select using (
-  exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-);
+create policy "Admins can view all profiles" on public.profiles for select using (public.is_admin());
 
 -- ==========================================
 -- CONVERSATIONS
@@ -141,6 +151,7 @@ create table if not exists public.usage_logs (
 );
 
 alter table public.usage_logs enable row level security;
+alter table public.usage_logs add constraint usage_logs_user_id_date_key unique (user_id, date);
 create policy "Users can view own usage" on public.usage_logs for select using (auth.uid() = user_id);
 
 create index idx_usage_user_date on public.usage_logs(user_id, date);
@@ -174,8 +185,16 @@ returns trigger as $$
 begin
   insert into public.usage_logs (user_id, tokens, api_calls, date)
   select c.user_id, new.tokens_used, 1, current_date
-  from public.conversations c where c.id = new.conversation_id
-  on conflict (id) do nothing;
+  from public.conversations c 
+  where c.id = new.conversation_id
+  on conflict (user_id, date) 
+  do update set 
+    tokens = public.usage_logs.tokens + excluded.tokens,
+    api_calls = public.usage_logs.api_calls + 1;
   return new;
 end;
 $$ language plpgsql security definer;
+
+create or replace trigger on_ai_message_created
+  after insert on public.messages
+  for each row execute procedure public.log_usage();
