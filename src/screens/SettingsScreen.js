@@ -10,6 +10,25 @@ export default function SettingsScreen({ navigation }) {
   const [pushNotif, setPushNotif] = useState(true);
   const [emailNotif, setEmailNotif] = useState(true);
 
+  const mcpProviders = [
+    { id: 'figma', name: 'Figma', icon: 'vector-bezier', desc: 'Read design files and components', color: '#F24E1E' },
+    { id: 'canva', name: 'Canva', icon: 'palette-outline', desc: 'Access and export Canva designs', color: '#00C4CC' },
+    { id: 'custom', name: 'Custom MCP', icon: 'server-network', desc: 'Connect your own MCP server', color: colors.primary },
+  ];
+  const [mcpConnected, setMcpConnected] = useState({ figma: false, canva: false, custom: false });
+
+  const handleMcpToggle = (id) => {
+    const isConnected = mcpConnected[id];
+    Alert.alert(
+      isConnected ? 'Disconnect' : 'Connect',
+      isConnected ? `Disconnect ${id} MCP server?` : `Connect to ${id} MCP server?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: isConnected ? 'Disconnect' : 'Connect', onPress: () => setMcpConnected(prev => ({ ...prev, [id]: !isConnected })) },
+      ]
+    );
+  };
+
   const sections = [
     {
       title: 'APPEARANCE',
@@ -85,6 +104,33 @@ export default function SettingsScreen({ navigation }) {
           </View>
         ))}
 
+        {/* MCP Connections Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>MCP CONNECTIONS</Text>
+          <View style={styles.group}>
+            {mcpProviders.map((p, i) => (
+              <View key={p.id} style={[styles.row, i < mcpProviders.length - 1 && styles.rowBorder]}>
+                <View style={styles.rowLeft}>
+                  <View style={[styles.iconBg, { backgroundColor: p.color + '20' }]}>
+                    <MaterialCommunityIcons name={p.icon} size={20} color={p.color} />
+                  </View>
+                  <View>
+                    <Text style={styles.rowLabel}>{p.name}</Text>
+                    <Text style={styles.rowDesc}>{p.desc}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.mcpBtn, { backgroundColor: mcpConnected[p.id] ? '#D1FAE5' : colors.surfaceContainerLow }]}
+                  onPress={() => handleMcpToggle(p.id)}
+                >
+                  <MaterialCommunityIcons name={mcpConnected[p.id] ? 'check-circle' : 'link-plus'} size={14} color={mcpConnected[p.id] ? '#059669' : colors.primary} />
+                  <Text style={[styles.mcpBtnText, { color: mcpConnected[p.id] ? '#059669' : colors.primary }]}>{mcpConnected[p.id] ? 'Connected' : 'Connect'}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        </View>
+
         <TouchableOpacity
           style={styles.logoutBtn}
           activeOpacity={0.7}
@@ -117,6 +163,8 @@ const styles = StyleSheet.create({
   iconBg: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primaryContainer + '30', justifyContent: 'center', alignItems: 'center' },
   rowLabel: { fontSize: 14, fontWeight: '600', color: colors.onSurface },
   rowDesc: { fontSize: 11, color: colors.onSurfaceVariant, marginTop: 1 },
+  mcpBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
+  mcpBtnText: { fontSize: 12, fontWeight: '700' },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     padding: 14, borderRadius: 28, borderWidth: 1.5, borderColor: colors.error, marginTop: 8,

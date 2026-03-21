@@ -11,6 +11,12 @@ export default function ConversationsScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const mcpProviders = [
+    { id: 'figma', name: 'Figma', icon: 'vector-bezier', color: '#F24E1E' },
+    { id: 'canva', name: 'Canva', icon: 'palette-outline', color: '#00C4CC' },
+    { id: 'custom', name: 'MCP', icon: 'server-network', color: colors.primary },
+  ];
+  const [mcpStatus] = useState({ figma: false, canva: false, custom: false });
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -74,6 +80,23 @@ export default function ConversationsScreen({ navigation }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Conversations</Text>
         <Text style={styles.headerCount}>{conversations.length} total</Text>
+      </View>
+      {/* MCP Status Strip */}
+      <View style={styles.mcpStrip}>
+        {mcpProviders.map(p => (
+          <TouchableOpacity
+            key={p.id}
+            style={styles.mcpChip}
+            onPress={() => navigation.getParent()?.navigate('Profile', { openSettings: true })}
+          >
+            <View style={[styles.mcpDot, { backgroundColor: mcpStatus[p.id] ? '#059669' : colors.outlineVariant }]} />
+            <MaterialCommunityIcons name={p.icon} size={13} color={mcpStatus[p.id] ? p.color : colors.onSurfaceVariant} />
+            <Text style={[styles.mcpChipText, { color: mcpStatus[p.id] ? p.color : colors.onSurfaceVariant }]}>{p.name}</Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity style={styles.mcpManageBtn} onPress={() => navigation.getParent()?.navigate('Profile')}>
+          <Text style={styles.mcpManageBtnText}>Manage MCPs</Text>
+        </TouchableOpacity>
       </View>
       <View style={styles.searchContainer}>
         <Searchbar
@@ -141,7 +164,13 @@ const styles = StyleSheet.create({
   header: { paddingTop: 54, paddingHorizontal: 20, paddingBottom: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   headerTitle: { fontSize: 22, fontWeight: '800', color: colors.onSurface },
   headerCount: { fontSize: 12, color: colors.outline, fontWeight: '600' },
-  searchContainer: { paddingHorizontal: 20, paddingVertical: 12 },
+  mcpStrip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 8, gap: 8 },
+  mcpChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: colors.surfaceContainerLow, borderRadius: 20 },
+  mcpDot: { width: 6, height: 6, borderRadius: 3 },
+  mcpChipText: { fontSize: 11, fontWeight: '600' },
+  mcpManageBtn: { marginLeft: 'auto', paddingHorizontal: 10, paddingVertical: 5 },
+  mcpManageBtnText: { fontSize: 11, fontWeight: '700', color: colors.primary },
+  searchContainer: { paddingHorizontal: 20, paddingVertical: 4 },
   searchBar: { borderRadius: 28, backgroundColor: colors.surfaceContainerLow, height: 44 },
   searchInput: { fontSize: 14, minHeight: 44 },
   scrollContent: { paddingHorizontal: 20, paddingBottom: 100 },
