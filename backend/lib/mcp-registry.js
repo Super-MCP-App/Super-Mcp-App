@@ -142,10 +142,15 @@ export function getAvailableTools(connections = {}) {
 }
 
 export async function executeTool(toolName, args, connections = {}) {
+  console.log(`[MCP Registry] Executing ${toolName}. Connections:`, Object.keys(connections).join(', '));
   try {
     // Shared validation for Figma tools
     if (toolName.startsWith('figma_')) {
-      if (!connections.figma?.access_token || connections.figma.status !== 'connected') {
+      const figmaToken = connections.figma?.access_token;
+      const isConnected = connections.figma?.status === 'connected';
+      console.log(`[MCP Registry] Figma Connection Check: token=${!!figmaToken}, status=${connections.figma?.status}`);
+
+      if (!figmaToken || !isConnected) {
         return { 
           error: "NOT_CONNECTED", 
           message: "User is not connected to Figma. Tell the user: 'Please connect your Figma account first.' and emit the open_connect_figma_screen trigger in your response text." 
