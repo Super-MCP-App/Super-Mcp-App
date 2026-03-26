@@ -11,106 +11,93 @@ import {
 export function getAvailableTools(connections = {}) {
   const tools = [];
 
-  // Figma tools are added regardless of connection state so the AI knows they exist
-  // and can prompt the user to connect if they try to use them.
-  tools.push(
-    {
-      type: 'function',
-      function: {
-        name: 'figma_get_files',
-        description: "Get user's Figma files. Call this when the user asks to see their Figma files or projects. If they are not connected to Figma, this will return an error instructing them to connect.",
-        parameters: {
-          type: 'object',
-          properties: {},
-        },
-      },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'figma_get_file',
-        description: 'Get details, structure, and nodes of a specific Figma file.',
-        parameters: {
-          type: 'object',
-          properties: {
-            file_key: { type: 'string', description: 'The unique Figma file key from the URL' },
+  // Only expose Figma tools if connected, to prevent accidental "Not Connected" loops for unrelated queries
+  if (connections.figma?.status === 'connected') {
+    tools.push(
+      {
+        type: 'function',
+        function: {
+          name: 'figma_get_files',
+          description: "Get user's Figma files.",
+          parameters: {
+            type: 'object',
+            properties: {},
           },
-          required: ['file_key'],
         },
       },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'figma_export_frame',
-        description: 'Export a specific frame or node from a Figma file as an image.',
-        parameters: {
-          type: 'object',
-          properties: {
-            file_key: { type: 'string', description: 'The unique Figma file key' },
-            node_id: { type: 'string', description: 'The specific node ID (e.g., 1:2)' },
-            format: { type: 'string', enum: ['png', 'jpg', 'svg', 'pdf'], description: 'Export format' },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_get_file',
+          description: 'Get details, structure, and nodes of a specific Figma file.',
+          parameters: {
+            type: 'object',
+            properties: {
+              file_key: { type: 'string', description: 'The unique Figma file key from the URL' },
+            },
+            required: ['file_key'],
           },
-          required: ['file_key', 'node_id', 'format'],
         },
       },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'figma_get_styles',
-        description: 'Extract colors, typography, and styles from a Figma design.',
-        parameters: {
-          type: 'object',
-          properties: {
-            file_key: { type: 'string', description: 'The unique Figma file key' },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_export_frame',
+          description: 'Export a specific frame or node from a Figma file as an image.',
+          parameters: {
+            type: 'object',
+            properties: {
+              file_key: { type: 'string', description: 'The unique Figma file key' },
+              node_id: { type: 'string', description: 'The specific node ID (e.g., 1:2)' },
+              format: { type: 'string', enum: ['png', 'jpg', 'svg', 'pdf'], description: 'Export format' },
+            },
+            required: ['file_key', 'node_id', 'format'],
           },
-          required: ['file_key'],
         },
       },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'figma_analyze_design',
-        description: 'Analyze UI/UX of a Figma file and suggest improvements based on its node structure.',
-        parameters: {
-          type: 'object',
-          properties: {
-            file_key: { type: 'string', description: 'The unique Figma file key' },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_get_styles',
+          description: 'Extract colors, typography, and styles from a Figma design.',
+          parameters: {
+            type: 'object',
+            properties: {
+              file_key: { type: 'string', description: 'The unique Figma file key' },
+            },
+            required: ['file_key'],
           },
-          required: ['file_key'],
         },
       },
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'figma_create_frame',
-        description: '(LIMITED SUPPORT) Simulate UI frame creation.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name: { type: 'string' },
-            width: { type: 'number' },
-            height: { type: 'number' },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_analyze_design',
+          description: 'Analyze UI/UX of a Figma file and suggest improvements based on its node structure.',
+          parameters: {
+            type: 'object',
+            properties: {
+              file_key: { type: 'string', description: 'The unique Figma file key' },
+            },
+            required: ['file_key'],
           },
-          required: ['name', 'width', 'height'],
         },
+      }
+    );
+  }
+
+  // Always include debug tool
+  tools.push({
+    type: 'function',
+    function: {
+      name: 'debug_get_session_info',
+      description: 'Get current session and connection debug info for the developer.',
+      parameters: {
+        type: 'object',
+        properties: {},
       },
     },
-    {
-      type: 'function',
-      function: {
-        name: 'debug_get_session_info',
-        description: 'Get current session and connection debug info. Use this to help the developer debug why a connection might be missing.',
-        parameters: {
-          type: 'object',
-          properties: {},
-        },
-      },
-    }
-  );
+  });
 
   // If user connected Canva
   if (connections.canva?.status === 'connected') {
