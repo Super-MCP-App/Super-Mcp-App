@@ -14,18 +14,22 @@ export function getFigmaAuthUrl(state) {
 }
 
 export async function exchangeFigmaToken(code) {
-  const res = await fetch('https://www.figma.com/api/oauth/token', {
+  const credentials = Buffer.from(`${process.env.FIGMA_CLIENT_ID}:${process.env.FIGMA_CLIENT_SECRET}`).toString('base64');
+  const res = await fetch('https://api.figma.com/v1/oauth/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: { 
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${credentials}`,
+    },
     body: new URLSearchParams({
-      client_id: process.env.FIGMA_CLIENT_ID,
-      client_secret: process.env.FIGMA_CLIENT_SECRET,
       redirect_uri: process.env.NEXT_PUBLIC_FIGMA_REDIRECT_URI,
       code,
       grant_type: 'authorization_code',
     }),
   });
-  return res.json();
+  const data = await res.json();
+  console.log('[Figma] Token exchange response status:', res.status, JSON.stringify(data).substring(0, 200));
+  return data;
 }
 
 export async function refreshFigmaToken(refreshToken) {
