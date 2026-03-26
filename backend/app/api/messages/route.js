@@ -72,6 +72,13 @@ export async function POST(request) {
     return acc;
   }, {});
 
+  // DEBUG: Write to a file I can read
+  try {
+    const fs = require('fs');
+    const logBatch = `[${new Date().toISOString()}] User: ${auth.user.id} | Email: ${auth.user.email} | Connections: ${Object.keys(connectionsMap).join(', ')}\n`;
+    fs.appendFileSync('/tmp/mcp_chat_debug.log', logBatch);
+  } catch (e) {}
+
   const availableTools = useMcp ? getAvailableTools(connectionsMap) : [];
 
   // Save user message (append [Image Attachment] if no text but image exists)
