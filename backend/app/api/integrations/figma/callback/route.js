@@ -1,6 +1,14 @@
-import { createServerSupabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { exchangeFigmaToken, getFigmaUser } from '@/lib/figma';
 import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-dynamic';
+
+// Admin client that bypasses Supabase RLS (needed since this route has no user JWT)
+const adminSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // GET /api/integrations/figma/callback — OAuth callback
 export async function GET(request) {
@@ -38,9 +46,8 @@ export async function GET(request) {
     // Get Figma user info
     const figmaUser = await getFigmaUser(tokenData.access_token);
 
-    // Store in connected_apps using admin client
-    const supabase = createServerSupabase();
-    await supabase.from('connected_apps').upsert({
+    // Store in connected_apps using admin client to bypass RLS
+    const { error: upsertErr } = await adminSupabase.from('connected_apps').upsert({
       user_id: userId,
       provider: 'figma',
       access_token: tokenData.access_token,
@@ -52,6 +59,7 @@ export async function GET(request) {
       status: 'connected',
       metadata: { figma_user_id: figmaUser.id },
     }, { onConflict: 'user_id,provider' });
+    if (upsertErr) console.error('[Figma] Failed to save token to DB:', upsertErr);
 
     return NextResponse.redirect(`${appRedirect}?status=success&provider=figma`);
   } catch (err) {
