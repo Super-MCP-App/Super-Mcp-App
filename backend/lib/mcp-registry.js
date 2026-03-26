@@ -156,18 +156,15 @@ export async function executeTool(toolName, args, connections = {}) {
     const figmaToken = connections.figma?.access_token;
 
     switch (toolName) {
-      case 'figma_get_files':
-        // Defaulting to the user's team projects if project/team ID isn't provided directly isn't perfectly supported by the free tier simply calling /v1/files, 
-        // We will fetch the user's projects if we can, but usually /v1/me/files doesn't exist. We will return a mock or ask for a team id.
-        // Actually, let's just return a helpful message that they need a team_id, or return a mock list of their recent files since the Figma API requires a team_id for projects.
+      case 'figma_get_files': {
+        const figmaUser = await getFigmaUser(figmaToken);
         return { 
-          source: 'figma', 
-          files: [
-            { key: 'mock-file-123', name: 'Mobile App UI Kit', last_modified: new Date().toISOString() },
-            { key: 'mock-file-456', name: 'Dashboard Design System', last_modified: new Date().toISOString() }
-          ],
-          note: "Note: The actual Figma API requires a Team ID to list projects. Returning recent mock files for demonstration."
+          source: 'figma',
+          connected_as: figmaUser.handle || figmaUser.email,
+          message: "Figma account is connected! To access a specific file, please share the Figma file URL (e.g. https://www.figma.com/file/XXXXXX/FileName). I can then read its contents, styles, and components.",
+          tip: "The Figma API does not support listing all files without a Team ID. Share a specific file URL to get started."
         };
+      }
 
       case 'figma_get_file':
         return await getFigmaFile(figmaToken, args.file_key);
