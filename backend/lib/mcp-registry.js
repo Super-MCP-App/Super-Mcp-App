@@ -5,7 +5,10 @@ import {
   getFigmaFiles, 
   getFigmaFile, 
   getFigmaImages,
-  getFigmaStyles 
+  getFigmaStyles,
+  getFigmaProjects,
+  createFigmaFile,
+  getFigmaUser
 } from './figma';
 
 export function getAvailableTools(connections = {}) {
@@ -18,14 +21,43 @@ export function getAvailableTools(connections = {}) {
         type: 'function',
         function: {
           name: 'figma_create_ui',
-          description: 'Generate a UI design structure in Figma (e.g. login page, dashboard). This creates a design specification that can be converted to nodes.',
+          description: 'Generate a UI design structure. Use this to brainstorm or plan a design before creating the real file.',
           parameters: {
             type: 'object',
             properties: {
-              prompt: { type: 'string', description: 'Description of the UI to create' },
-              theme: { type: 'string', enum: ['light', 'dark', 'premium'], description: 'Design theme' },
+              prompt: { type: 'string', description: 'Description of the UI' },
+              theme: { type: 'string' },
             },
             required: ['prompt'],
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_get_projects',
+          description: "List projects in a Figma Team. Required to find a destination for a new file.",
+          parameters: {
+            type: 'object',
+            properties: {
+              team_id: { type: 'string', description: 'The Figma Team ID' },
+            },
+            required: ['team_id'],
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'figma_create_file',
+          description: 'Create a REAL new file in a specific Figma project.',
+          parameters: {
+            type: 'object',
+            properties: {
+              project_id: { type: 'string', description: 'The Figma Project ID where the file should be created' },
+              name: { type: 'string', description: 'Name of the new file' },
+            },
+            required: ['project_id', 'name'],
           },
         },
       },
@@ -184,6 +216,19 @@ export async function executeTool(toolName, args, connections = {}) {
             styles: ["Inter", "Primary: #4F46E5", "Neutral: #9CA3AF"],
           }
         };
+
+      case 'figma_get_projects':
+        return await getFigmaProjects(figmaToken, args.team_id);
+
+      case 'figma_create_file': {
+        const result = await createFigmaFile(figmaToken, args.project_id, args.name);
+        return {
+          success: true,
+          message: `Successfully created Figma file '${args.name}'!`,
+          file_url: `https://www.figma.com/file/${result.key}/${encodeURIComponent(args.name)}`,
+          file_key: result.key
+        };
+      }
 
       case 'figma_get_files': {
         const figmaUser = await getFigmaUser(figmaToken);

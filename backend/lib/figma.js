@@ -6,7 +6,7 @@ export function getFigmaAuthUrl(state) {
   const params = new URLSearchParams({
     client_id: process.env.FIGMA_CLIENT_ID,
     redirect_uri: process.env.NEXT_PUBLIC_FIGMA_REDIRECT_URI,
-    scope: 'current_user:read,file_content:read',
+    scope: 'current_user:read,file_content:read,file_content:write',
     state: state || '',
     response_type: 'code',
   });
@@ -82,4 +82,24 @@ export async function getFigmaTeamProjects(accessToken, teamId) {
 export async function getFigmaStyles(accessToken, fileKey) {
   const data = await figmaFetch(`/files/${fileKey}`, accessToken);
   return data.styles || {};
+}
+
+export async function getFigmaProjects(accessToken, teamId) {
+  return figmaFetch(`/teams/${teamId}/projects`, accessToken);
+}
+
+export async function createFigmaFile(accessToken, projectId, name) {
+  const res = await fetch(`${FIGMA_API_BASE}/projects/${projectId}/files`, {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(`Figma File Creation Failed: ${error.message || res.status}`);
+  }
+  return res.json();
 }
