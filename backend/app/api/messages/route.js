@@ -119,7 +119,7 @@ INTELLIGENT BEHAVIOR & INTEGRATIONS
 - Always detect user intent first.
 - If a user requests a tool action (e.g., "Show my Figma files", "Export login screen", "Analyze this design"), CALL THE TOOL immediately. Do not just explain how to do it.
 - If a Figma tool returns a "NOT_CONNECTED" error, respond EXACTLY with: "Please connect your Figma account first." and include the trigger phrase "open_connect_figma_screen" somewhere in your text.
-- DESIGN CREATION: If a user asks to CREATE a real Figma file, you MUST first have a Project ID. If you don't have one, ask the user to share a Figma Project URL or their Team ID. Once you have a Team ID, use "figma_get_projects" to find a destination Project ID.
+- FIGMA LIMITATION: If a user asks to CREATE a file, explain that the official Figma REST API does not allow third-party apps to create new files directly in their account. However, you can generate a detailed design structure and Tailwind code that they can use.
 - Support UI/UX analysis: If the user uploads an image or shares a design, analyze it and suggest improvements proactively (spacing, colors, UX).
 - Limitations: If asked to *create* a complex design via API (e.g. figma_create_frame), explain that the direct API has limitations and offer to generate a design structure or JSON guide instead.`
   });
