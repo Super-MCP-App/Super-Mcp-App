@@ -98,6 +98,17 @@ export function getAvailableTools(connections = {}) {
           required: ['name', 'width', 'height'],
         },
       },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'debug_get_session_info',
+        description: 'Get current session and connection debug info. Use this to help the developer debug why a connection might be missing.',
+        parameters: {
+          type: 'object',
+          properties: {},
+        },
+      },
     }
   );
 
@@ -153,7 +164,7 @@ export async function executeTool(toolName, args, connections = {}) {
       if (!figmaToken || !isConnected) {
         return { 
           error: "NOT_CONNECTED", 
-          message: "User is not connected to Figma. Tell the user: 'Please connect your Figma account first.' and emit the open_connect_figma_screen trigger in your response text." 
+          message: "User is not connected to Figma. Tell the user: 'Please connect your Figma account first.' and emit the open_connect_figma_screen trigger in your response text."
         };
       }
     }
@@ -168,6 +179,15 @@ export async function executeTool(toolName, args, connections = {}) {
           connected_as: figmaUser.handle || figmaUser.email,
           message: "Figma account is connected! To access a specific file, please share the Figma file URL (e.g. https://www.figma.com/file/XXXXXX/FileName). I can then read its contents, styles, and components.",
           tip: "The Figma API does not support listing all files without a Team ID. Share a specific file URL to get started."
+        };
+      }
+
+      case 'debug_get_session_info': {
+        return {
+          status: 'success',
+          connections_present: Object.keys(connections),
+          figma_details: connections.figma ? { status: connections.figma.status, has_token: !!connections.figma.access_token } : 'missing',
+          help: "If Figma is missing here, the messages API did not find a row in the connected_apps table for your current user ID."
         };
       }
 
