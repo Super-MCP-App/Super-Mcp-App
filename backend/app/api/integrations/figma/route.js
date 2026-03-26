@@ -2,6 +2,7 @@ import { getAuthenticatedClient, errorResponse, successResponse } from '@/lib/ap
 import { getFigmaAuthUrl, exchangeFigmaToken, getFigmaUser, getFigmaFile, getFigmaImages } from '@/lib/figma';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
 // GET /api/integrations/figma — start OAuth or get Figma data
 export async function GET(request) {
   const { searchParams } = new URL(request.url);

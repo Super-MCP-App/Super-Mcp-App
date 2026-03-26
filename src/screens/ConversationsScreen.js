@@ -115,6 +115,21 @@ export default function ConversationsScreen({ navigation }) {
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchConversations(); }} colors={[colors.primary]} />}
       >
+        {!search && (
+          <TouchableOpacity 
+            style={[styles.convCard, { marginBottom: 16, backgroundColor: colors.primaryContainer }]} 
+            activeOpacity={0.7}
+            onPress={handleNew}
+          >
+            <View style={[styles.convIcon, { backgroundColor: colors.primary }]}>
+              <MaterialCommunityIcons name="plus" size={24} color={colors.onPrimary} />
+            </View>
+            <View style={styles.convContent}>
+              <Text style={[styles.convTitle, { color: colors.onPrimaryContainer }]}>Start a New Chat</Text>
+              <Text style={[styles.convMessage, { color: colors.onPrimaryContainer, opacity: 0.8 }]}>Create a new conversation with AI</Text>
+            </View>
+          </TouchableOpacity>
+        )}
         {filtered.length > 0 ? filtered.map(conv => (
           <Swipeable 
             key={conv.id} 
