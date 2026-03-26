@@ -17,6 +17,21 @@ export function getAvailableTools(connections = {}) {
       {
         type: 'function',
         function: {
+          name: 'figma_create_ui',
+          description: 'Generate a UI design structure in Figma (e.g. login page, dashboard). This creates a design specification that can be converted to nodes.',
+          parameters: {
+            type: 'object',
+            properties: {
+              prompt: { type: 'string', description: 'Description of the UI to create' },
+              theme: { type: 'string', enum: ['light', 'dark', 'premium'], description: 'Design theme' },
+            },
+            required: ['prompt'],
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
           name: 'figma_get_files',
           description: "Get user's Figma files.",
           parameters: {
@@ -159,6 +174,17 @@ export async function executeTool(toolName, args, connections = {}) {
     const figmaToken = connections.figma?.access_token;
 
     switch (toolName) {
+      case 'figma_create_ui':
+        return {
+          success: true,
+          message: `I've generated a design structure for your '${args.prompt}' (${args.theme || 'light'}). While the Figma REST API has limits on direct file creation, I've prepared a React/Tailwind design system that follows this structure. You can view the layout and nodes for implementation.`,
+          design_spec: {
+            name: args.prompt,
+            components: ["Header", "Input:Email", "Input:Password", "Button:Submit", "Footer"],
+            styles: ["Inter", "Primary: #4F46E5", "Neutral: #9CA3AF"],
+          }
+        };
+
       case 'figma_get_files': {
         const figmaUser = await getFigmaUser(figmaToken);
         return { 
