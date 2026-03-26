@@ -66,6 +66,16 @@ export default function LoginScreen({ navigation }) {
           />
 
           <Button
+            mode="text"
+            onPress={() => navigation.navigate('ForgotPassword')}
+            labelStyle={{ color: colors.primary, fontSize: 13 }}
+            style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 8 }}
+            compact
+          >
+            Forgot Password?
+          </Button>
+
+          <Button
             mode="contained"
             onPress={handleLogin}
             loading={loading}

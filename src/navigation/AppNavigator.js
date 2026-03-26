@@ -11,6 +11,7 @@ import { Text } from 'react-native-paper';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import OnboardingStep1 from '../screens/OnboardingStep1';
 import OnboardingStep2 from '../screens/OnboardingStep2';
 import OnboardingStep3 from '../screens/OnboardingStep3';
@@ -118,6 +119,7 @@ export default function AppNavigator({ initialRoute = 'Welcome' }) {
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
 
         {/* Onboarding */}
         <Stack.Screen name="Onboarding1" component={OnboardingStep1} />

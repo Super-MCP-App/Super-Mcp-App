@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 // GET /api/integrations/figma/callback — OAuth callback
 export async function GET(request) {
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
   const stateRaw = searchParams.get('state'); // JSON string { u: user_id, r: redirectUrl }
   const error = searchParams.get('error');
