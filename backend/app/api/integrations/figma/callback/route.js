@@ -6,18 +6,18 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const stateRaw = searchParams.get('state'); // JSON string { u: user_id, r: redirectUrl }
+  const stateVal = searchParams.get('state') || '';
   const error = searchParams.get('error');
 
-  let userId = stateRaw;
-  let appRedirect = 'mcpapp://mcp-auth';
-  try {
-    const parsed = JSON.parse(stateRaw);
-    userId = parsed.u;
-    if (parsed.r) appRedirect = parsed.r;
-  } catch (e) {
-    // legacy string fallback
+  let parsedState = {};
+  if (stateVal) {
+    try {
+      parsedState = JSON.parse(Buffer.from(stateVal, 'base64').toString('utf-8'));
+    } catch(e) { /* swallow */ }
   }
+  const { u: userId, r: redirectUrl } = parsedState;
+
+  const appRedirect = redirectUrl || 'mcpapp://mcp-auth';
 
   if (error) {
     return NextResponse.redirect(`${appRedirect}?status=error&provider=figma&reason=figma_denied`);

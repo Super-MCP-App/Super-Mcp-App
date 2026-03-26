@@ -92,7 +92,7 @@ export const integrationsApi = {
 
   // Figma
   figmaAuth: (redirectUrl = '') => 
-    apiFetch(`/integrations/figma?action=auth&redirect_url=${encodeURIComponent(redirectUrl)}`),
+    apiFetch(`/integrations/figma?action=auth&redirect_url=${encodeURIComponent(redirectUrl)}&t=${Date.now()}`),
   figmaStatus: () => apiFetch('/integrations/figma'),
   figmaGetFile: (fileKey) =>
     apiFetch('/integrations/figma', { method: 'POST', body: JSON.stringify({ action: 'getFile', fileKey }) }),

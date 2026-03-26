@@ -15,7 +15,8 @@ export async function GET(request) {
     
     const appRedirect = searchParams.get('redirect_url') || 'mcpapp://mcp-auth';
     const stateObj = JSON.stringify({ u: auth.user.id, r: appRedirect });
-    const url = getFigmaAuthUrl(stateObj);
+    const b64State = Buffer.from(stateObj).toString('base64');
+    const url = getFigmaAuthUrl(b64State);
     return successResponse({ authUrl: url });
   }
 
