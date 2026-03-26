@@ -31,9 +31,26 @@ export async function POST(request) {
     .single();
 
   if (!profile?.is_onboarded || !profile?.nvidia_api_key) {
+    const aiContent = "I am ready to help! Please complete the 'Connect Apps' onboarding and provide your NVIDIA API Key in Settings to activate AI responses.";
+    
+    // Save user message
+    await auth.supabase.from('messages').insert({
+      conversation_id, role: 'user', content: content || '[Image Attachment]',
+    });
+
+    // Save AI warning
+    const { data: aiMessage } = await auth.supabase.from('messages').insert({
+      conversation_id, role: 'assistant', content: aiContent,
+    }).select().single();
+
+    await auth.supabase.from('conversations').update({
+      last_message: aiContent.substring(0, 200),
+      updated_at: new Date().toISOString(),
+    }).eq('id', conversation_id);
+
     return successResponse({
       userMessage: { role: 'user', content },
-      aiMessage: { role: 'assistant', content: "I am ready to help! Please complete the 'Connect Apps' onboarding and provide your NVIDIA API Key in Settings to activate AI responses." },
+      aiMessage: aiMessage || { role: 'assistant', content: aiContent },
       tokensUsed: 0,
     }, 201);
   }
