@@ -1,5 +1,7 @@
 import { getAuthenticatedClient, errorResponse, successResponse } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
+
 const AVAILABLE_PROVIDERS = [
   { provider: 'figma', provider_display_name: 'Figma', description: 'Access and export your Figma designs natively via AI.', scopes: 'files:read', status: 'available' },
   { provider: 'canva', provider_display_name: 'Canva', description: 'Export designs from your Canva account.', scopes: 'design:read', status: 'available' },

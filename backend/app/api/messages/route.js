@@ -61,6 +61,11 @@ export async function POST(request) {
     .select('provider, status, access_token')
     .eq('user_id', auth.user.id);
 
+  console.log(`[Messages] User ${auth.user.id} has ${connectionsData?.length || 0} connections`);
+  if (connectionsData?.length > 0) {
+    console.log(`[Messages] Providers: ${connectionsData.map(c => c.provider).join(', ')}`);
+  }
+
   // Map Array of DB connections to an Object map (e.g. { figma: { status: 'connected', access_token: '...' } })
   const connectionsMap = (connectionsData || []).reduce((acc, row) => {
     acc[row.provider] = row;
