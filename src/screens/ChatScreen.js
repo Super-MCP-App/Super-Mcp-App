@@ -234,7 +234,7 @@ export default function ChatScreen({ route, navigation }) {
                       {msg.content?.includes('open_connect_figma_screen') && (
                         <TouchableOpacity 
                           style={styles.connectFigmaBtn} 
-                          onPress={() => navigation.getParent()?.navigate('Profile', { openSettings: true })}
+                          onPress={() => navigation.getParent()?.navigate('Apps')}
                         >
                           <MaterialCommunityIcons name="vector-bezier" size={16} color={colors.white} />
                           <Text style={styles.connectFigmaText}>Connect Figma Account</Text>

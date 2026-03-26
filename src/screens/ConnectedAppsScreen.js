@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Text, IconButton, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -56,7 +57,18 @@ export default function ConnectedAppsScreen({ navigation }) {
     }
   }, []);
 
-  useEffect(() => { fetchApps(); }, []);
+  // Refresh when screen comes into focus (e.g. returning from OAuth)
+  useFocusEffect(useCallback(() => { fetchApps(); }, [fetchApps]));
+
+  // Also listen for the OAuth deep link callback to immediately refresh
+  useEffect(() => {
+    const subscription = Linking.addEventListener('url', (event) => {
+      if (event.url?.includes('mcp-auth') && event.url?.includes('provider=figma')) {
+        setTimeout(() => fetchApps(), 500);
+      }
+    });
+    return () => subscription.remove();
+  }, [fetchApps]);
 
   const handleConnect = async (provider) => {
     try {
