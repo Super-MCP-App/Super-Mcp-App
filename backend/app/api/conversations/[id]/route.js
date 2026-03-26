@@ -1,5 +1,6 @@
 import { getAuthenticatedClient, errorResponse, successResponse } from '@/lib/api-helpers';
 
+export const dynamic = 'force-dynamic';
 // GET /api/conversations/[id] — get conversation with messages
 export async function GET(request, { params }) {
   const auth = await getAuthenticatedClient(request);

@@ -1,6 +1,8 @@
 import { getAuthenticatedClient, errorResponse, successResponse } from '@/lib/api-helpers';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/conversations — list user's conversations
 export async function GET(request) {
   const auth = await getAuthenticatedClient(request);
