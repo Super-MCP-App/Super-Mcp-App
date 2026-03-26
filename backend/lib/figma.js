@@ -6,7 +6,7 @@ export function getFigmaAuthUrl(state) {
   const params = new URLSearchParams({
     client_id: process.env.FIGMA_CLIENT_ID,
     redirect_uri: process.env.NEXT_PUBLIC_FIGMA_REDIRECT_URI,
-    scope: 'current_user:read,file_comments:read,file_comments:write,file_content:read,file_metadata:read,file_versions:read,library_assets:read,library_content:read,team_library_content:read,file_dev_resources:read,file_dev_resources:write,projects:read,webhooks:read,webhooks:write',
+    scope: 'current_user:read,file_content:read',
     state: state || '',
     response_type: 'code',
   });
